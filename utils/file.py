@@ -58,7 +58,7 @@ def read_images_and_labels(path: str, upper_bound: int):
 
     return data_dict
 
-def build_loader(path: str, lower_bound: int, upper_bound: int):
+def build_loader(path: str, lower_bound: int, upper_bound: int, batch_size: int):
     data_dict = read_images_and_labels(path, upper_bound=upper_bound)
     train_images, train_labels, train_llmarks, train_rlmarks = [], [], [], []
     for i in range(0, 14):
@@ -75,7 +75,15 @@ def build_loader(path: str, lower_bound: int, upper_bound: int):
         val_llmarks.extend(data_dict[str(i)]['left_landmarks'])
         val_rlmarks.extend(data_dict[str(i)]['right_landmarks'])
 
-    train_loader = DataLoader(EyeDataset(train_images, train_labels, train_llmarks, train_rlmarks), batch_size=2, shuffle=True)
-    val_loader   = DataLoader(EyeDataset(val_images, val_labels, val_llmarks, val_rlmarks), batch_size=2, shuffle=True)
+    train_loader = DataLoader(
+        EyeDataset(train_images, train_labels, train_llmarks, train_rlmarks), 
+        batch_size=batch_size, 
+        shuffle=True
+    )
+    val_loader   = DataLoader(
+        EyeDataset(val_images, val_labels, val_llmarks, val_rlmarks), 
+        batch_size=batch_size, 
+        shuffle=True
+    )
 
     return train_loader, val_loader

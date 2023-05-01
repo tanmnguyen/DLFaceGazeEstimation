@@ -8,7 +8,12 @@ from models.ITracker import ITrackerModel
 
 def main(args):
     # load data 
-    train_loader, val_loader = build_loader(args.path, args.lowerbound, args.upperbound)
+    train_loader, val_loader = build_loader(
+        args.path, 
+        args.lowerbound, 
+        args.upperbound,
+        batch_size=16
+    )
 
     # eye-gaze model
     if args.type == "eye":
