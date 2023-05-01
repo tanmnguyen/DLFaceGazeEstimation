@@ -1,9 +1,11 @@
+import sys
+sys.path.append('../')
+
 import os, cv2
 import numpy as np
 
-import os
-import numpy as np
-import cv2
+from dataset import EyeDataset
+from torch.utils.data import Dataset, DataLoader
 
 def read_images_and_labels(path: str, upper_bound: int):
     """
@@ -55,3 +57,25 @@ def read_images_and_labels(path: str, upper_bound: int):
                                 }
 
     return data_dict
+
+def build_loader(path: str, lower_bound: int, upper_bound: int):
+    data_dict = read_images_and_labels(path, upper_bound=upper_bound)
+    train_images, train_labels, train_llmarks, train_rlmarks = [], [], [], []
+    for i in range(0, 14):
+        train_images.extend(data_dict[str(i)]['images'])
+        train_labels.extend(data_dict[str(i)]['labels'])
+        train_llmarks.extend(data_dict[str(i)]['left_landmarks'])
+        train_rlmarks.extend(data_dict[str(i)]['right_landmarks'])
+
+    # validation data 
+    val_images, val_labels, val_llmarks, val_rlmarks = [], [], [], []
+    for i in range(14, 15):
+        val_images.extend(data_dict[str(i)]['images'])
+        val_labels.extend(data_dict[str(i)]['labels'])
+        val_llmarks.extend(data_dict[str(i)]['left_landmarks'])
+        val_rlmarks.extend(data_dict[str(i)]['right_landmarks'])
+
+    train_loader = DataLoader(EyeDataset(train_images, train_labels, train_llmarks, train_rlmarks), batch_size=2, shuffle=True)
+    val_loader   = DataLoader(EyeDataset(val_images, val_labels, val_llmarks, val_rlmarks), batch_size=2, shuffle=True)
+
+    return train_loader, val_loader
