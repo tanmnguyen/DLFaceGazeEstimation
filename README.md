@@ -14,7 +14,7 @@ pip install -r requirements.txt
 # Training
 PyTorch framework is used in this project with different network architecture backbones provided in the `configs/` directory. To train a model:
 ```bash
-python train.py --path path/to/train/data --config path/to/backbone.yaml --epochs 10
+python train.py --path path/to/train/data --config path/to/backbone.yaml --type [eye/face] --epochs 10 
 ```
 The program accepts `--upperbound` and `--lowerbound` arguments to set limits on the amount of training data to be read. 
 

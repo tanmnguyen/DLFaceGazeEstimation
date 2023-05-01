@@ -3,25 +3,25 @@ import torch
 import argparse
 import numpy as np
 
-from BuildDataset import BuildDataset
 from utils.file import read_images_and_labels
-from torch.utils.data import Dataset, DataLoader
-from GazeEstimationModel import GazeEstimationModel
+from EyeGazeEstimation import EyeGazeEstimationModel
 
 def main(args):
     # load data 
     data_dict = read_images_and_labels(args.path, upper_bound=args.upperbound)
-    # build model 
-    gaze_est_model = GazeEstimationModel(config_path=args.config) 
-    # dummy data for testing purpose
-    images = torch.from_numpy(np.random.rand(3, 3, 224, 224)).float()
-    labels = torch.from_numpy(np.array([[1, 2], [3, 4], [5, 6]])).float()
-    # build data set for training
-    dataset    = BuildDataset(images, labels)
-    dataloader = DataLoader(dataset, batch_size=2, shuffle=True)
-    # train model
-    gaze_est_model.train(dataloader, dataloader, num_epochs=args.epochs, lr=0.001)
-
+    # eye-gaze model
+    if args.type == "eye":
+        # init model
+        eye_gaze_model = EyeGazeEstimationModel(config_path=args.config)
+        # build training data
+        eye_gaze_model.load_data(data_dict)
+        # train 
+        eye_gaze_model.train(num_epochs=args.epochs, lr=0.001)
+    # face-gaze model
+    if args.type == "face":
+        # TODO
+        pass
+    
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='')
 
@@ -41,6 +41,12 @@ if __name__ == '__main__':
                         type=int,
                         required=False,
                         help="path to config model backbone (yaml file)")
+
+    parser.add_argument('-type',
+                        '--type',
+                        type=str,
+                        required=True,
+                        help="model type: eye/face for baseline/full model")
 
     parser.add_argument('-upperbound',
                         '--upperbound',
