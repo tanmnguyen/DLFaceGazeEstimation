@@ -19,8 +19,7 @@ class EyeGazeEstimationModel(GazeEstimationModel):
         # specify model name 
         self.set_name("eyeGazeEstimationModel.pt")
 
-        # define model 
-        eyes_model = nn.Sequential(
+        self.right_eye_model = nn.Sequential(
             nn.Conv2d(3, 96, kernel_size=11, stride=4),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=3, stride=2),
@@ -38,8 +37,23 @@ class EyeGazeEstimationModel(GazeEstimationModel):
             nn.ReLU()
         )
 
-        self.right_eye_model = eyes_model
-        self.left_eye_model  = eyes_model
+        self.left_eye_model  = nn.Sequential(
+            nn.Conv2d(3, 96, kernel_size=11, stride=4),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.LocalResponseNorm(size=5, alpha=0.0001, beta=0.75),
+
+            nn.Conv2d(96, 256, kernel_size=5, padding=2, groups=2),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+            nn.LocalResponseNorm(size=5, alpha=0.0001, beta=0.75),
+
+            nn.Conv2d(256, 384, kernel_size=3, padding=1),
+            nn.ReLU(),
+
+            nn.Conv2d(384, 64, kernel_size=1),
+            nn.ReLU()
+        )
 
         self.face_model = nn.Sequential(
             nn.Conv2d(3, 96, kernel_size=11, stride=4),
@@ -97,7 +111,7 @@ class EyeGazeEstimationModel(GazeEstimationModel):
         self.train()
 
         train_l1_loss, train_cs_loss = 0, 0
-        for batch_idx, (l_eye, r_eye, face, target) in enumerate(tqdm(self.train_loader, desc=f"Epoch {epoch}")):
+        for batch_idx, (l_eye, r_eye, face, target) in enumerate(tqdm(self.train_loader, desc=f"(Training) Epoch {epoch}")):
             try:
                 optimizer.zero_grad()
                 output = self.forward(l_eye, r_eye, face)
@@ -128,7 +142,7 @@ class EyeGazeEstimationModel(GazeEstimationModel):
 
         val_cs_loss, val_l1_loss = 0, 0
         with torch.no_grad():
-            for batch_idx, (l_eye, r_eye, face, target) in enumerate(tqdm(self.val_loader, desc=f"Epoch {epoch}")):
+            for batch_idx, (l_eye, r_eye, face, target) in enumerate(tqdm(self.val_loader, desc=f"(Validating) Epoch {epoch}")):
                 output = self.forward(l_eye, r_eye, face)
                 l1_loss = l1_criterion(output, target)
                 cs_loss = cs_criterion(

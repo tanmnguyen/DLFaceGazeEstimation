@@ -38,7 +38,7 @@ def letterbox_resize(image, target_size):
 
     # Create a blank image with the target size and fill it with gray color
     blank_image = np.zeros((target_height, target_width, 3), dtype=np.uint8)
-    blank_image[:, :] = (128, 128, 128)
+    blank_image[:, :] = (0, 0, 0)
 
     # Compute the x, y offsets to center the resized image
     x_offset = (target_width - new_width) // 2
