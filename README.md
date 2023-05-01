@@ -12,10 +12,18 @@ cd DLFaceGazeEstimation/
 pip install -r requirements.txt
 ```
 # Training
-PyTorch framework is used in this project with different network architecture backbones provided in the `configs/` directory. To train a model:
+To train the baseline model (using eye images and full face image). The model implements itracker architecture [@cvpr2016_gazecapture]
 ```bash
-python train.py --path path/to/train/data --config path/to/backbone.yaml --type [eye/face] --epochs 10 
+python train.py --path path/to/train/data --type eye --epochs 10 
 ```
 The program accepts `--upperbound` and `--lowerbound` arguments to set limits on the amount of training data to be read. 
 
 **Note:** The project is ongoing and changes are expected to be made regularly.
+
+
+[@inproceedings{cvpr2016_gazecapture,
+  Author = {Kyle Krafka and Aditya Khosla and Petr Kellnhofer and Harini Kannan and Suchendra Bhandarkar and Wojciech Matusik and Antonio Torralba},
+  Title = {Eye Tracking for Everyone},
+  Year = {2016},
+  Booktitle = {IEEE Conference on Computer Vision and Pattern Recognition (CVPR)}
+}]
