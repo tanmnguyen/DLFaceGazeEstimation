@@ -9,7 +9,7 @@ import torch.nn as nn
 import torchvision.models as models
 
 from tqdm import tqdm
-from utils.general import yawpitch2xyz
+from utils.general import pitchyaw2xyz
 from models.GazeEstimation import GazeEstimationModel
 
 class ItrackerImageModel(nn.Module):
@@ -31,7 +31,6 @@ class ItrackerImageModel(nn.Module):
 
             nn.Conv2d(384, 64, kernel_size=1, stride=1, padding=0),
             nn.ReLU(inplace=True),
-            
         )
 
     def forward(self, x):
@@ -98,17 +97,13 @@ class ITrackerModel(GazeEstimationModel):
                 optimizer.zero_grad()
                 output = self.forward(l_eye, r_eye, face)
                 l1_loss = l1_criterion(output, target)
-                with torch.no_grad():
-                    cs_loss = cs_criterion(
-                        torch.tensor(yawpitch2xyz(output.numpy())).float(), 
-                        torch.tensor(yawpitch2xyz(target.numpy())).float()
-                    )
+                cs_loss = torch.abs(cs_criterion(pitchyaw2xyz(output), pitchyaw2xyz(target)))
                 # update based on l1 loss
                 l1_loss.backward()
                 optimizer.step()
 
                 train_l1_loss += l1_loss.item()
-                train_cs_loss += torch.sum(cs_loss)
+                train_cs_loss += cs_loss.mean()
             except:
                 traceback.print_exc()
                 break
@@ -127,12 +122,9 @@ class ITrackerModel(GazeEstimationModel):
             for l_eye, r_eye, face, target in tqdm(self.val_loader, desc=f"(Validating) Epoch {epoch}"):
                 output = self.forward(l_eye, r_eye, face)
                 l1_loss = l1_criterion(output, target)
-                cs_loss = cs_criterion(
-                    torch.tensor(yawpitch2xyz(output.numpy())).float(), 
-                    torch.tensor(yawpitch2xyz(target.numpy())).float()
-                )
+                cs_loss = torch.abs(cs_criterion(pitchyaw2xyz(output), pitchyaw2xyz(target)))
                 val_l1_loss += l1_loss.item()
-                val_cs_loss += torch.sum(cs_loss)
+                val_cs_loss += cs_loss.mean()
 
         val_l1_loss /= len(self.val_loader)
         val_cs_loss /= len(self.val_loader)

@@ -1,19 +1,15 @@
 import cv2
 import math
+import torch
 import numpy as np
 
-def yawpitch2xyz(yawpitch_list):
-    yawpitch_arr = np.array(yawpitch_list)
-    cos_yaw = np.cos(yawpitch_arr[:, 0])
-    sin_yaw = np.sin(yawpitch_arr[:, 0])
-    cos_pitch = np.cos(yawpitch_arr[:, 1])
-    sin_pitch = np.sin(yawpitch_arr[:, 1])
-
-    x = cos_yaw * cos_pitch
-    y = sin_yaw * cos_pitch
-    z = sin_pitch
-
-    return np.column_stack((x, y, z))
+def pitchyaw2xyz(pitchyaw: torch.Tensor) -> torch.Tensor:
+    pitches, yaws = pitchyaw[:, 0], pitchyaw[:, 1]
+    x = -torch.cos(pitches) * torch.sin(yaws)
+    y = -torch.sin(pitches)
+    z = -torch.cos(pitches) * torch.cos(yaws)
+    result = torch.stack((x, y, z), dim=1)
+    return result
 
 def letterbox_resize(image, target_size):
     """
