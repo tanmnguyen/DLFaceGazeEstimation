@@ -12,7 +12,7 @@ def main(args):
         args.path, 
         args.lowerbound, 
         args.upperbound,
-        batch_size=16
+        batch_size=64
     )
 
     # eye-gaze model
