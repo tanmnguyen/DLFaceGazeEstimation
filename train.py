@@ -4,7 +4,7 @@ import argparse
 import numpy as np
 
 from utils.file import build_loader
-from models.ITracker import ITrackerModel
+from models.EyeGazeEstimation import EyeGazeEstimationModel
 
 def main(args):
     # load data 
@@ -17,7 +17,7 @@ def main(args):
 
     # eye-gaze model
     if args.type == "eye":
-        model = ITrackerModel()
+        model = EyeGazeEstimationModel()
         model.fit(train_loader, val_loader, args.epochs)
 
     # face-gaze model

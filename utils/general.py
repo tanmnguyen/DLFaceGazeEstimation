@@ -1,6 +1,7 @@
 import cv2
 import math
 import torch
+import random
 import numpy as np
 
 def pitchyaw2xyz(pitchyaw: torch.Tensor) -> torch.Tensor:
@@ -51,3 +52,22 @@ def letterbox_resize(image, target_size):
     blank_image[y_offset:y_offset+new_height, x_offset:x_offset+new_width] = resized_image
 
     return np.array(blank_image)
+
+def split_train_val_indices(array_len, train_percentage):
+    """
+    Randomly splits an array of images into training and validation sets.
+    Returns the training and validation sets as two separate numpy arrays.
+
+    Args:
+        images (numpy array): An array of images to be split.
+
+    Returns:
+        A tuple containing two numpy arrays: the training set and the validation set.
+    """
+    # Calculate the split point
+    split_point = int(train_percentage * array_len)
+    # Get the training and validation indices
+    train_indices = random.sample(range(array_len), split_point)
+    val_indices   = [i for i in range(array_len) if i not in train_indices]
+    # result
+    return train_indices, val_indices

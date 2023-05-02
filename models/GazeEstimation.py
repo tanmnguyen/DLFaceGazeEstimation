@@ -2,6 +2,7 @@ import os
 import yaml
 import torch
 import datetime
+import traceback
 import numpy as np
 import torch.nn as nn
 import torch.optim as optim
@@ -16,35 +17,47 @@ class GazeEstimationModel(nn.Module):
         super(GazeEstimationModel, self).__init__()
         self.name  = "gaze-estimation-model.pt"
 
-    def _save_fig(self, history, dst_dir: str):
-        # Extract loss values from history
-        train_l1_loss = [h["train_l1_loss"] for h in history]
-        train_mal_loss = [h["train_mal_loss"] for h in history]
-        val_l1_loss = [h["val_l1_loss"] for h in history]
-        val_mal_loss = [h["val_mal_loss"] for h in history]
+    def _save_fig(self, dst_dir: str):
+        # Plot the training and validation losses
+        train_l1_loss = [h["l1_loss"] for h in self.train_step_history]
+        train_mal_loss = [h["mal_loss"] for h in self.train_step_history]
+        val_l1_loss = [h["l1_loss"] for h in self.val_step_history]
+        val_mal_loss = [h["mal_loss"] for h in self.val_step_history]
 
-        # Create figure and subplots
-        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8))
+        # Training L1 Loss
+        plt.figure()
+        plt.plot(train_l1_loss)
+        plt.title("Training L1 Loss")
+        plt.xlabel("Step")
+        plt.ylabel("Loss")
+        plt.savefig(os.path.join(dst_dir, "training_l1_loss.png"))
 
-        # Plot training and validation l1 loss curves
-        ax1.plot(train_l1_loss, label="Train L1 Loss")
-        ax1.plot(val_l1_loss, label="Val L1 Loss")
-        ax1.set_xlabel("Epoch")
-        ax1.set_ylabel("L1 Loss")
-        ax1.legend()
+        # Training Mal Loss
+        plt.figure()
+        plt.plot(train_mal_loss)
+        plt.title("Training Mean Absolute Angle Loss")
+        plt.xlabel("Step")
+        plt.ylabel("Loss")
+        plt.savefig(os.path.join(dst_dir, "training_mal_loss.png"))
 
-        # Plot training and validation cosine similarity loss curves
-        ax2.plot(train_mal_loss, label="Train Mean Absolute Angle Loss")
-        ax2.plot(val_mal_loss,   label="Val Mean Absolute Angle Loss")
-        ax2.set_xlabel("Epoch")
-        ax2.set_ylabel("Mean Absolute Angle Loss")
-        ax2.legend()
+        # Validation L1 Loss
+        plt.figure()
+        plt.plot(val_l1_loss)
+        plt.title("Validation L1 Loss")
+        plt.xlabel("Step")
+        plt.ylabel("Loss")
+        plt.savefig(os.path.join(dst_dir, "validation_l1_loss.png"))
 
-        # Save figure
-        fig.savefig(os.path.join(dst_dir, "loss_curves.png"))
+        # Validation Mal Loss
+        plt.figure()
+        plt.plot(val_mal_loss)
+        plt.title("Validation Mean Absolute Angle Loss")
+        plt.xlabel("Step")
+        plt.ylabel("Loss")
+        plt.savefig(os.path.join(dst_dir, "validation_mal_loss.png"))
 
     def _learn(self, epoch, l1_criterion, mal_criterion, optimizer):
-        self.train()
+        self.train() 
 
         train_l1_loss, train_mal_loss = 0, 0
         for data, target in tqdm(self.train_loader, desc=f"(Training) Epoch {epoch}"):
@@ -59,6 +72,12 @@ class GazeEstimationModel(nn.Module):
 
                 train_l1_loss  += l1_loss.item()
                 train_mal_loss += mal_loss.item()
+
+                self.train_step_history.append({
+                    "l1_loss":  l1_loss.item(),
+                    "mal_loss": mal_loss.item()
+                })
+
             except:
                 traceback.print_exc()
                 break
@@ -80,6 +99,11 @@ class GazeEstimationModel(nn.Module):
                 val_l1_loss  += l1_loss.item()
                 val_mal_loss += mal_loss.item()
 
+                self.val_step_history.append({
+                    "l1_loss":  l1_loss.item(),
+                    "mal_loss": mal_loss.item()
+                })
+
         val_l1_loss /= len(self.val_loader)
         val_mal_loss /= len(self.val_loader)
         
@@ -94,17 +118,13 @@ class GazeEstimationModel(nn.Module):
         # optimizer, l1 loss, mean absolute angle loss criterions 
         optimizer, l1_criterion, mal_criterion = optim.Adam(self.parameters(), lr=lr), F.l1_loss, mean_abs_angle_loss
 
-        history, optimal_loss = [], None
+        optimal_loss = None
+        self.train_step_history = []
+        self.val_step_history   = []
         for epoch in range(epochs):
             train_l1_loss, train_mal_loss = self._learn(epoch + 1, l1_criterion, mal_criterion, optimizer)
             val_l1_loss, val_mal_loss     = self._eval(epoch + 1, l1_criterion, mal_criterion, optimizer)
 
-            history.append({
-                "train_l1_loss": train_l1_loss,
-                "train_mal_loss": train_mal_loss,
-                "val_l1_loss": val_l1_loss,
-                "val_mal_loss": val_mal_loss
-            })
 
             # update and save the best model per epoch using cosine similarity
             if optimal_loss is None or optimal_loss > val_mal_loss:
@@ -116,5 +136,4 @@ class GazeEstimationModel(nn.Module):
             print(f"Val Loss (L1):   {val_l1_loss:.4f},   Val Loss (Mean Absolute Angle Loss):   {val_mal_loss:.4f}")
             print()
         
-        with torch.no_grad():
-            self._save_fig(history, dst_dir)
+        self._save_fig(dst_dir)

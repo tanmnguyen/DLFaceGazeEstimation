@@ -5,6 +5,8 @@ import os, cv2
 import numpy as np
 
 from dataset import EyeDataset
+
+from utils.general import split_train_val_indices
 from torch.utils.data import Dataset, DataLoader
 
 def read_images_and_labels(path: str, upper_bound: int):
@@ -45,10 +47,13 @@ def read_images_and_labels(path: str, upper_bound: int):
             right_landmarks = np.load(right_landmarks_file)
 
             n_files = min(len(os.listdir(folder_path)), upper_bound)
-            for file in os.listdir(folder_path)[:n_files]:
-                if file.endswith('.jpg') or file.endswith('.jpeg') or file.endswith('.png'):
-                    image_file = os.path.join(folder_path, file)
+            for file_idx in range(n_files):
+                image_file = os.path.join(folder_path, str(file_idx) + ".png")
+                if os.path.basename(image_file) in os.listdir(folder_path):
                     images.append(cv2.imread(image_file))
+                    if images[-1] is None:
+                        print(f"Image Not Found or Deprecated: {image_file}")
+                        images.pop()
 
             data_dict[folder] = { 'images': np.array(images),
                                     'labels': np.array(labels),
@@ -60,6 +65,8 @@ def read_images_and_labels(path: str, upper_bound: int):
 
 def build_loader(path: str, lower_bound: int, upper_bound: int, batch_size: int):
     data_dict = read_images_and_labels(path, upper_bound=upper_bound)
+
+    # training data
     train_images, train_labels, train_llmarks, train_rlmarks = [], [], [], []
     for i in range(0, 14):
         train_images.extend(data_dict[str(i)]['images'])
@@ -70,16 +77,29 @@ def build_loader(path: str, lower_bound: int, upper_bound: int, batch_size: int)
     # validation data 
     val_images, val_labels, val_llmarks, val_rlmarks = [], [], [], []
     for i in range(14, 15):
-        val_images.extend(data_dict[str(i)]['images'])
-        val_labels.extend(data_dict[str(i)]['labels'])
-        val_llmarks.extend(data_dict[str(i)]['left_landmarks'])
-        val_rlmarks.extend(data_dict[str(i)]['right_landmarks'])
+        # simulate gaze calibration process
+        train_indices, val_indices = split_train_val_indices(
+            array_len=len(data_dict[str(i)]['images']), 
+            train_percentage=0.01
+        )
+        print(f"Calibration Simulation - Train: {len(train_indices)} - Val: {len(val_indices)}")
+
+        train_images.extend(data_dict[str(i)]['images'][train_indices])
+        train_labels.extend(data_dict[str(i)]['labels'][train_indices])
+        train_llmarks.extend(data_dict[str(i)]['left_landmarks'][train_indices])
+        train_rlmarks.extend(data_dict[str(i)]['right_landmarks'][train_indices])
+        # use the rest for validation
+        val_images.extend(data_dict[str(i)]['images'][val_indices])
+        val_labels.extend(data_dict[str(i)]['labels'][val_indices])
+        val_llmarks.extend(data_dict[str(i)]['left_landmarks'][val_indices])
+        val_rlmarks.extend(data_dict[str(i)]['right_landmarks'][val_indices])
 
     train_loader = DataLoader(
         EyeDataset(train_images, train_labels, train_llmarks, train_rlmarks), 
         batch_size=batch_size, 
         shuffle=True
     )
+
     val_loader   = DataLoader(
         EyeDataset(val_images, val_labels, val_llmarks, val_rlmarks), 
         batch_size=batch_size, 
