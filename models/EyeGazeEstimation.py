@@ -55,7 +55,7 @@ class EyeGazeEstimationModel(GazeEstimationModel):
         self.AlexNetConvModel = AlexNetConvModel() 
 
         self.regression = nn.Sequential(
-            nn.Dropout(),
+            # nn.Dropout(),
 
             nn.Linear(in_features=1024, out_features=4096),
             nn.ReLU(inplace=True),
