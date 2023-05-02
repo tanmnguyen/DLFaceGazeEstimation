@@ -10,12 +10,15 @@ import torch.nn.functional as F
 import matplotlib.pyplot as plt
 
 from tqdm import tqdm
+from utils.runtime import available_device
 from utils.general import pitchyaw2xyz, mean_abs_angle_loss
 
 class GazeEstimationModel(nn.Module):
-    def __init__(self):
+    def __init__(self, device=available_device()):
         super(GazeEstimationModel, self).__init__()
         self.name  = "gaze-estimation-model.pt"
+        self.device = device 
+        self.to(device)
 
     def _save_fig(self, dst_dir: str):
         # Plot the training and validation losses
@@ -63,7 +66,8 @@ class GazeEstimationModel(nn.Module):
         for data, target in tqdm(self.train_loader, desc=f"(Training) Epoch {epoch}"):
             try:
                 optimizer.zero_grad()
-                output      = self.forward(data)
+                target      = target.to(self.device)
+                output      = self.forward(data, self.device)
                 l1_loss     = l1_criterion(output, target)
                 mal_loss    = mal_criterion(pitchyaw2xyz(output), pitchyaw2xyz(target))
                 # update based on l1 loss
@@ -93,7 +97,8 @@ class GazeEstimationModel(nn.Module):
         val_l1_loss, val_mal_loss = 0, 0
         with torch.no_grad():
             for data, target in tqdm(self.val_loader, desc=f"(Validating) Epoch {epoch}"):
-                output      = self.forward(data)
+                target      = target.to(self.device)
+                output      = self.forward(data, self.device)
                 l1_loss     = l1_criterion(output, target)
                 mal_loss    = mal_criterion(pitchyaw2xyz(output), pitchyaw2xyz(target))
                 val_l1_loss  += l1_loss.item()
@@ -104,13 +109,13 @@ class GazeEstimationModel(nn.Module):
                     "mal_loss": mal_loss.item()
                 })
 
-        val_l1_loss /= len(self.val_loader)
+        val_l1_loss  /= len(self.val_loader)
         val_mal_loss /= len(self.val_loader)
         
         return val_l1_loss, val_mal_loss
 
     def fit(self, train_loader, val_loader, epochs, lr=0.001):
-        self.train_loader,  self.val_loader = train_loader, val_loader 
+        self.train_loader, self.val_loader = train_loader, val_loader 
 
         dst_dir = f"trains/train-{datetime.datetime.now().strftime('%Y%m%d %H%M%S')}"
         os.makedirs(dst_dir, exist_ok=True)
@@ -125,8 +130,7 @@ class GazeEstimationModel(nn.Module):
             train_l1_loss, train_mal_loss = self._learn(epoch + 1, l1_criterion, mal_criterion, optimizer)
             val_l1_loss, val_mal_loss     = self._eval(epoch + 1, l1_criterion, mal_criterion, optimizer)
 
-
-            # update and save the best model per epoch using cosine similarity
+            # update and save the best model per epoch using mean absolute angle loss criteria
             if optimal_loss is None or optimal_loss > val_mal_loss:
                 optimal_loss = val_mal_loss 
                 torch.save(self.state_dict(), os.path.join(dst_dir, self.name))

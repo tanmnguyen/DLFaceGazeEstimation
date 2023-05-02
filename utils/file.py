@@ -80,7 +80,7 @@ def build_loader(path: str, lower_bound: int, upper_bound: int, batch_size: int)
         # simulate gaze calibration process
         train_indices, val_indices = split_train_val_indices(
             array_len=len(data_dict[str(i)]['images']), 
-            train_percentage=0.01
+            train_percentage=0.1
         )
         print(f"Calibration Simulation - Train: {len(train_indices)} - Val: {len(val_indices)}")
 

@@ -10,6 +10,7 @@ import torchvision.models as models
 
 from tqdm import tqdm
 from utils.general import pitchyaw2xyz
+from utils.runtime import available_device
 from models.GazeEstimation import GazeEstimationModel
 
 class AlexNetConvModel(nn.Module):
@@ -47,8 +48,8 @@ class AlexNetConvModel(nn.Module):
         return x
 
 class EyeGazeEstimationModel(GazeEstimationModel):
-    def __init__(self):
-        super(EyeGazeEstimationModel, self).__init__()
+    def __init__(self, device=available_device()):
+        super(EyeGazeEstimationModel, self).__init__(device)
         self.name = "EyeGazeEstimationModel.pt"
 
         self.AlexNetConvModel = AlexNetConvModel() 
@@ -68,22 +69,20 @@ class EyeGazeEstimationModel(GazeEstimationModel):
             
             nn.Linear(in_features=4096, out_features=2),
         )
-        
-    def forward(self, data): 
-        left, right = data[0], data[1]
 
+        self.to(device)
+        
+    def forward(self, data, device): 
+        left, right = data[0].to(device), data[1].to(device)
         # left eye image 
         xEyeL = self.AlexNetConvModel(left)
-        xEyeL = xEyeL.view(xEyeL.size(0), -1)
-
+        xEyeL = xEyeL.view(xEyeL.size(0), -1).to(device)
         # right eye image 
         xEyeR = self.AlexNetConvModel(right)
-        xEyeR = xEyeR.view(xEyeR.size(0), -1)
-
+        xEyeR = xEyeR.view(xEyeR.size(0), -1).to(device)
         # concat both eye images for regression
-        xEyes = torch.cat((xEyeL, xEyeR), 1)
+        xEyes = torch.cat((xEyeL, xEyeR), 1).to(device)
         xEyes = self.regression(xEyes)
-
         # result
         return xEyes
 
