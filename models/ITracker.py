@@ -72,7 +72,8 @@ class ITrackerModel(GazeEstimationModel):
             nn.Linear(128, 2),
         )
 
-    def forward(self, left, right, face):
+    def forward(self, data):
+        left, right, face = data[0], data[1], data[2]
         # Eye nets
         xEyeL = self.eyeModel(left)
         xEyeR = self.eyeModel(right)
@@ -87,48 +88,5 @@ class ITrackerModel(GazeEstimationModel):
         # result
         return x
 
-    # override 
-    def _learn(self, epoch, l1_criterion, mal_criterion, optimizer):
-        self.train()
-
-        train_l1_loss, train_mal_loss = 0, 0
-        for l_eye, r_eye, face, target in tqdm(self.train_loader, desc=f"(Training) Epoch {epoch}"):
-            try:
-                optimizer.zero_grad()
-                output      = self.forward(l_eye, r_eye, face)
-                l1_loss     = l1_criterion(output, target)
-                mal_loss    = mal_criterion(pitchyaw2xyz(output), pitchyaw2xyz(target))
-                # update based on l1 loss
-                l1_loss.backward()
-                optimizer.step()
-
-                train_l1_loss  += l1_loss.item()
-                train_mal_loss += mal_loss.item()
-            except:
-                traceback.print_exc()
-                break
-
-        train_l1_loss /= len(self.train_loader)
-        train_mal_loss /= len(self.train_loader)
-
-        return train_l1_loss, train_mal_loss
-
-    # override
-    def _eval(self, epoch, l1_criterion, mal_criterion, optimizer):
-        self.eval()
-
-        val_l1_loss, val_mal_loss = 0, 0
-        with torch.no_grad():
-            for l_eye, r_eye, face, target in tqdm(self.val_loader, desc=f"(Validating) Epoch {epoch}"):
-                output      = self.forward(l_eye, r_eye, face)
-                l1_loss     = l1_criterion(output, target)
-                mal_loss    = mal_criterion(pitchyaw2xyz(output), pitchyaw2xyz(target))
-                val_l1_loss  += l1_loss.item()
-                val_mal_loss += mal_loss.item()
-
-        val_l1_loss /= len(self.val_loader)
-        val_mal_loss /= len(self.val_loader)
-        
-        return val_l1_loss, val_mal_loss
 
     

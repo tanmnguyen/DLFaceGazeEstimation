@@ -56,4 +56,4 @@ class EyeDataset(Dataset):
         image = self.images[idx]
         label = self.labels[idx]
 
-        return l_eye, r_eye, image, label
+        return [l_eye, r_eye, image], labelg

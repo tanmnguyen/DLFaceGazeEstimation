@@ -43,6 +43,48 @@ class GazeEstimationModel(nn.Module):
         # Save figure
         fig.savefig(os.path.join(dst_dir, "loss_curves.png"))
 
+    def _learn(self, epoch, l1_criterion, mal_criterion, optimizer):
+        self.train()
+
+        train_l1_loss, train_mal_loss = 0, 0
+        for data, target in tqdm(self.train_loader, desc=f"(Training) Epoch {epoch}"):
+            try:
+                optimizer.zero_grad()
+                output      = self.forward(data)
+                l1_loss     = l1_criterion(output, target)
+                mal_loss    = mal_criterion(pitchyaw2xyz(output), pitchyaw2xyz(target))
+                # update based on l1 loss
+                l1_loss.backward()
+                optimizer.step()
+
+                train_l1_loss  += l1_loss.item()
+                train_mal_loss += mal_loss.item()
+            except:
+                traceback.print_exc()
+                break
+
+        train_l1_loss /= len(self.train_loader)
+        train_mal_loss /= len(self.train_loader)
+
+        return train_l1_loss, train_mal_loss
+
+    def _eval(self, epoch, l1_criterion, mal_criterion, optimizer):
+        self.eval()
+
+        val_l1_loss, val_mal_loss = 0, 0
+        with torch.no_grad():
+            for data, target in tqdm(self.val_loader, desc=f"(Validating) Epoch {epoch}"):
+                output      = self.forward(data)
+                l1_loss     = l1_criterion(output, target)
+                mal_loss    = mal_criterion(pitchyaw2xyz(output), pitchyaw2xyz(target))
+                val_l1_loss  += l1_loss.item()
+                val_mal_loss += mal_loss.item()
+
+        val_l1_loss /= len(self.val_loader)
+        val_mal_loss /= len(self.val_loader)
+        
+        return val_l1_loss, val_mal_loss
+
     def fit(self, train_loader, val_loader, epochs, lr=0.001):
         self.train_loader,  self.val_loader = train_loader, val_loader 
 
