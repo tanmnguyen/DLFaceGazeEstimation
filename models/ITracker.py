@@ -88,47 +88,47 @@ class ITrackerModel(GazeEstimationModel):
         return x
 
     # override 
-    def _learn(self, epoch, l1_criterion, cs_criterion, optimizer):
+    def _learn(self, epoch, l1_criterion, mal_criterion, optimizer):
         self.train()
 
-        train_l1_loss, train_cs_loss = 0, 0
+        train_l1_loss, train_mal_loss = 0, 0
         for l_eye, r_eye, face, target in tqdm(self.train_loader, desc=f"(Training) Epoch {epoch}"):
             try:
                 optimizer.zero_grad()
-                output = self.forward(l_eye, r_eye, face)
-                l1_loss = l1_criterion(output, target)
-                cs_loss = torch.abs(cs_criterion(pitchyaw2xyz(output), pitchyaw2xyz(target)))
+                output      = self.forward(l_eye, r_eye, face)
+                l1_loss     = l1_criterion(output, target)
+                mal_loss    = mal_criterion(pitchyaw2xyz(output), pitchyaw2xyz(target))
                 # update based on l1 loss
                 l1_loss.backward()
                 optimizer.step()
 
-                train_l1_loss += l1_loss.item()
-                train_cs_loss += cs_loss.mean()
+                train_l1_loss  += l1_loss.item()
+                train_mal_loss += mal_loss.item()
             except:
                 traceback.print_exc()
                 break
 
         train_l1_loss /= len(self.train_loader)
-        train_cs_loss /= len(self.train_loader)
+        train_mal_loss /= len(self.train_loader)
 
-        return train_l1_loss, train_cs_loss
+        return train_l1_loss, train_mal_loss
 
     # override
-    def _eval(self, epoch, l1_criterion, cs_criterion, optimizer):
+    def _eval(self, epoch, l1_criterion, mal_criterion, optimizer):
         self.eval()
 
-        val_cs_loss, val_l1_loss = 0, 0
+        val_l1_loss, val_mal_loss = 0, 0
         with torch.no_grad():
             for l_eye, r_eye, face, target in tqdm(self.val_loader, desc=f"(Validating) Epoch {epoch}"):
-                output = self.forward(l_eye, r_eye, face)
-                l1_loss = l1_criterion(output, target)
-                cs_loss = torch.abs(cs_criterion(pitchyaw2xyz(output), pitchyaw2xyz(target)))
-                val_l1_loss += l1_loss.item()
-                val_cs_loss += cs_loss.mean()
+                output      = self.forward(l_eye, r_eye, face)
+                l1_loss     = l1_criterion(output, target)
+                mal_loss    = mal_criterion(pitchyaw2xyz(output), pitchyaw2xyz(target))
+                val_l1_loss  += l1_loss.item()
+                val_mal_loss += mal_loss.item()
 
         val_l1_loss /= len(self.val_loader)
-        val_cs_loss /= len(self.val_loader)
+        val_mal_loss /= len(self.val_loader)
         
-        return val_l1_loss, val_cs_loss
+        return val_l1_loss, val_mal_loss
 
     

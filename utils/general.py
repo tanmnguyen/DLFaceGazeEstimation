@@ -11,6 +11,13 @@ def pitchyaw2xyz(pitchyaw: torch.Tensor) -> torch.Tensor:
     result = torch.stack((x, y, z), dim=1)
     return result
 
+def mean_abs_angle_loss(vectors1: torch.Tensor, vectors2: torch.Tensor) -> torch.Tensor:
+    cos_sims = torch.sum(vectors1 * vectors2, dim=1) / (torch.norm(vectors1, dim=1) * torch.norm(vectors2, dim=1))
+    cos_sims = torch.clamp(cos_sims, -1.0, 1.0)  # Ensure values are within [-1, 1] to avoid NaNs in acos
+    angle_diffs = torch.abs(torch.acos(cos_sims)).mean() # mean absolute angle loss 
+    angle_diffs = angle_diffs * (180 / torch.tensor(np.pi)) # rad to deg
+    return angle_diffs
+
 def letterbox_resize(image, target_size):
     """
     Resizes the input image to the target size with letterboxing.
