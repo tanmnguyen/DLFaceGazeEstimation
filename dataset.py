@@ -19,7 +19,12 @@ class DefaultDataset(Dataset):
         label = self.labels[idx]
         return image, label
 
-class EyeDataset(Dataset):
+class FaceDataset(DefaultDataset):
+    def __init__(self, images, labels):
+        images = torch.Tensor(images).float().permute(0, 3, 1, 2)
+        super(FaceDataset, self).__init__(images, labels)        
+
+class EyeDataset(DefaultDataset):
     def __init__(self, images, labels, llmarks, rlmarks):
         self.labels = labels
         self.l_eye_imgs = []

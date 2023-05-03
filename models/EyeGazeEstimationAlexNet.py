@@ -50,17 +50,11 @@ class AlexNetRegrModel(nn.Module):
     def __init__(self):
         super(AlexNetRegrModel, self).__init__()
         self.features = nn.Sequential(
-            # nn.Dropout(),
-
             nn.Linear(in_features=1024, out_features=4096),
             nn.ReLU(inplace=True),
-            # nn.BatchNorm1d(4096),
-
-            # nn.Dropout(),
 
             nn.Linear(in_features=4096, out_features=4096),
             nn.ReLU(inplace=True),
-            # nn.BatchNorm1d(4096),
             
             nn.Linear(in_features=4096, out_features=2),
         )
@@ -71,7 +65,7 @@ class AlexNetRegrModel(nn.Module):
 
 class EyeGazeEstimationModelAlexNet(GazeEstimationModel):
     def __init__(self, device=available_device()):
-        super(EyeGazeEstimationModel, self).__init__(device)
+        super(EyeGazeEstimationModelAlexNet, self).__init__(device)
         self.name = "EyeGazeEstimationModel-AlexNet.pt"
 
         self.AlexNetConvModel = AlexNetConvModel() 

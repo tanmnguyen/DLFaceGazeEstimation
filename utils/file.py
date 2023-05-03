@@ -4,7 +4,7 @@ sys.path.append('../')
 import os, cv2
 import numpy as np
 
-from dataset import EyeDataset
+from dataset import EyeDataset, FaceDataset
 
 from utils.general import split_train_val_indices
 from torch.utils.data import Dataset, DataLoader
@@ -65,7 +65,7 @@ def read_images_and_labels(path: str, upper_bound: int):
 
     return data_dict
 
-def build_loader(path: str, lower_bound: int, upper_bound: int, batch_size: int):
+def build_loader(path: str, lower_bound: int, upper_bound: int, batch_size: int, loader_type: str):
     data_dict = read_images_and_labels(path, upper_bound=upper_bound)
 
     # training data
@@ -95,15 +95,26 @@ def build_loader(path: str, lower_bound: int, upper_bound: int, batch_size: int)
         val_labels.extend(data_dict[str(i)]['labels'][val_indices])
         val_llmarks.extend(data_dict[str(i)]['left_landmarks'][val_indices])
         val_rlmarks.extend(data_dict[str(i)]['right_landmarks'][val_indices])
+    
+    if loader_type == "eye":
+        train_dataset = EyeDataset(train_images, train_labels, train_llmarks, train_rlmarks)
+        valid_dataset = EyeDataset(val_images, val_labels, val_llmarks, val_rlmarks)
+
+    if loader_type == "face":
+        train_dataset = FaceDataset(train_images, train_labels)
+        valid_dataset = FaceDataset(val_images, val_labels)
+
+    assert train_dataset is not None
+    assert valid_dataset is not None
 
     train_loader = DataLoader(
-        EyeDataset(train_images, train_labels, train_llmarks, train_rlmarks), 
+        train_dataset,
         batch_size=batch_size, 
         shuffle=True
     )
 
     val_loader   = DataLoader(
-        EyeDataset(val_images, val_labels, val_llmarks, val_rlmarks), 
+        valid_dataset,
         batch_size=batch_size, 
         shuffle=True
     )

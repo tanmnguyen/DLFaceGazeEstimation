@@ -39,11 +39,13 @@ class LeNetRegrModel(nn.Module):
         super(LeNetRegrModel, self).__init__()
         self.features = nn.Sequential(
 
-            nn.Linear(11520, 120),
+            nn.Linear(300000, 120),
             nn.ReLU(inplace=True),
+            nn.Dropout(p=0.7),
 
             nn.Linear(120, 84),
             nn.ReLU(inplace=True),
+            nn.Dropout(p=0.7),
 
             nn.Linear(84, 2)
         )
@@ -52,10 +54,10 @@ class LeNetRegrModel(nn.Module):
         x = self.features(x)
         return x
 
-class EyeGazeEstimationModelLeNet(GazeEstimationModel):
+class FaceGazeEstimationModelLeNet(GazeEstimationModel):
     def __init__(self, device=available_device()):
-        super(EyeGazeEstimationModelLeNet, self).__init__(device)
-        self.name = "EyeGazeEstimationModel-LeNet.pt"
+        super(FaceGazeEstimationModelLeNet, self).__init__(device)
+        self.name = "FaceGazeEstimationModel-LeNet.pt"
 
         self.LeNetConvModel = LeNetConvModel() 
         self.LeNetRegrModel = LeNetRegrModel()
@@ -64,19 +66,15 @@ class EyeGazeEstimationModelLeNet(GazeEstimationModel):
         self.to(device)
         
     def forward(self, data): 
-        # left and right eye images 
-        left, right = data[0].to(self.device), data[1].to(self.device)
-        # forward left eye
-        xEyeL = self.LeNetConvModel(left)
-        xEyeL = xEyeL.view(xEyeL.size(0), -1)
-        # forward right eye
-        xEyeR = self.LeNetConvModel(right)
-        xEyeR = xEyeR.view(xEyeR.size(0), -1)
-        # concat both eye images for regression
-        xEyes = torch.cat((xEyeL, xEyeR), 1)
-        xEyes = self.LeNetRegrModel(xEyes)
+        # facial image 
+        data = data.to(self.device)
+        # forward face image 
+        xFace = self.LeNetConvModel(data)
+        xFace = xFace.view(xFace.size(0), -1)
+        # regression face image 
+        xFace = self.LeNetRegrModel(xFace)
         # result
-        return xEyes
+        return xFace
 
 
     

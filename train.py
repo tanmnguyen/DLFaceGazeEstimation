@@ -6,6 +6,7 @@ import numpy as np
 from utils.file import build_loader
 from models.EyeGazeEstimationAlexNet import EyeGazeEstimationModelAlexNet
 from models.EyeGazeEstimationLeNet   import EyeGazeEstimationModelLeNet
+from models.FaceGazeEstimationLeNet  import FaceGazeEstimationModelLeNet
 
 def main(args):
     # load data 
@@ -13,20 +14,23 @@ def main(args):
         args.path, 
         args.lowerbound, 
         args.upperbound,
-        batch_size=64
+        batch_size=128,
+        loader_type=args.type,
     )
 
     # eye-gaze model
     if args.type == "eye":
         # init eye-based model
         model = EyeGazeEstimationModelLeNet()
-        # start traininggi
+        # start training
         model.fit(train_loader, val_loader, args.epochs)
 
     # face-gaze model
     if args.type == "face":
-        # TODO
-        pass
+        # init face-based model
+        model = FaceGazeEstimationModelLeNet()
+        # start training
+        model.fit(train_loader, val_loader, args.epochs)
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='')
