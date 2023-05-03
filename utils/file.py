@@ -46,19 +46,20 @@ def read_images_and_labels(path: str, upper_bound: int):
             left_landmarks = np.load(left_landmarks_file)
             right_landmarks = np.load(right_landmarks_file)
 
-            n_files = min(len(os.listdir(folder_path)), upper_bound)
-            for file_idx in range(n_files):
-                image_file = os.path.join(folder_path, str(file_idx) + ".png")
-                if os.path.basename(image_file) in os.listdir(folder_path):
+            filenames = os.listdir(folder_path)
+            filenames.sort()
+            
+            n_files = min(len(filenames), upper_bound)
+            for filename in filenames[:n_files]:
+                # check image format 
+                if os.path.splitext(filename)[1] in [".jpg", ".jpeg", ".png", ".bmp", ".gif"]:
+                    image_file = os.path.join(folder_path, filename)
                     images.append(cv2.imread(image_file))
-                    if images[-1] is None:
-                        print(f"Image Not Found or Deprecated: {image_file}")
-                        images.pop()
 
-            data_dict[folder] = { 'images': np.array(images),
-                                    'labels': np.array(labels),
-                                    'left_landmarks': left_landmarks,
-                                    'right_landmarks': right_landmarks
+            data_dict[folder] = {'images': np.array(images),
+                                 'labels': np.array(labels),
+                                 'left_landmarks': left_landmarks,
+                                 'right_landmarks': right_landmarks
                                 }
 
     return data_dict

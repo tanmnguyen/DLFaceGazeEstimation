@@ -137,7 +137,7 @@ class GazeEstimationModel(nn.Module):
 
             # log info
             print(f"Train Loss (L1): {train_l1_loss:.4f}, Train Loss (Mean Absolute Angle Loss): {train_mal_loss:4f}")
-            print(f"Val Loss (L1):   {val_l1_loss:.4f},   Val Loss (Mean Absolute Angle Loss):   {val_mal_loss:.4f}")
+            print(f"Val Loss (L1):   {val_l1_loss:.4f}, Val Loss (Mean Absolute Angle Loss):   {val_mal_loss:.4f}")
             print()
         
         self._save_fig(dst_dir)

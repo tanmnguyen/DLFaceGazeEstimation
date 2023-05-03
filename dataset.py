@@ -1,6 +1,8 @@
 import cv2
 import torch
 import numpy as np
+
+from utils.plot import draw_gaze
 from utils.general import letterbox_resize
 from torch.utils.data import Dataset, DataLoader
 

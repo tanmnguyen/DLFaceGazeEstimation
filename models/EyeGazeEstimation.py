@@ -44,17 +44,12 @@ class AlexNetConvModel(nn.Module):
 
     def forward(self, x):
         x = self.features(x)
-        x = x.view(x.size(0), -1)
         return x
 
-class EyeGazeEstimationModel(GazeEstimationModel):
-    def __init__(self, device=available_device()):
-        super(EyeGazeEstimationModel, self).__init__(device)
-        self.name = "EyeGazeEstimationModel.pt"
-
-        self.AlexNetConvModel = AlexNetConvModel() 
-
-        self.regression = nn.Sequential(
+class AlexNetRegrModel(nn.Module):
+    def __init__(self):
+        super(AlexNetRegrModel, self).__init__()
+        self.features = nn.Sequential(
             # nn.Dropout(),
 
             nn.Linear(in_features=1024, out_features=4096),
@@ -70,6 +65,18 @@ class EyeGazeEstimationModel(GazeEstimationModel):
             nn.Linear(in_features=4096, out_features=2),
         )
 
+    def forward(self, x):
+        x = self.features(x)
+        return x
+
+class EyeGazeEstimationModel(GazeEstimationModel):
+    def __init__(self, device=available_device()):
+        super(EyeGazeEstimationModel, self).__init__(device)
+        self.name = "EyeGazeEstimationModel.pt"
+
+        self.AlexNetConvModel = AlexNetConvModel() 
+        self.AlexNetRegrModel = AlexNetRegrModel()
+
         self.device = device
         self.to(device)
         
@@ -84,7 +91,7 @@ class EyeGazeEstimationModel(GazeEstimationModel):
         xEyeR = xEyeR.view(xEyeR.size(0), -1)
         # concat both eye images for regression
         xEyes = torch.cat((xEyeL, xEyeR), 1)
-        xEyes = self.regression(xEyes)
+        xEyes = self.AlexNetRegrModel(xEyes)
         # result
         return xEyes
 
