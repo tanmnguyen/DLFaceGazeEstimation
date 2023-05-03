@@ -17,7 +17,9 @@ def main(args):
 
     # eye-gaze model
     if args.type == "eye":
+        # init eye-based model
         model = EyeGazeEstimationModel()
+        # start traininggi
         model.fit(train_loader, val_loader, args.epochs)
 
     # face-gaze model

@@ -63,11 +63,11 @@ class GazeEstimationModel(nn.Module):
         self.train() 
 
         train_l1_loss, train_mal_loss = 0, 0
-        for data, target in tqdm(self.train_loader, desc=f"(Training) Epoch {epoch}"):
+        for data, target in tqdm(self.train_loader, desc=f"(Train) Epoch {epoch}"):
             try:
                 optimizer.zero_grad()
                 target      = target.to(self.device)
-                output      = self.forward(data, self.device)
+                output      = self.forward(data)
                 l1_loss     = l1_criterion(output, target)
                 mal_loss    = mal_criterion(pitchyaw2xyz(output), pitchyaw2xyz(target))
                 # update based on l1 loss
@@ -86,7 +86,7 @@ class GazeEstimationModel(nn.Module):
                 traceback.print_exc()
                 break
 
-        train_l1_loss /= len(self.train_loader)
+        train_l1_loss  /= len(self.train_loader)
         train_mal_loss /= len(self.train_loader)
 
         return train_l1_loss, train_mal_loss
@@ -96,9 +96,9 @@ class GazeEstimationModel(nn.Module):
 
         val_l1_loss, val_mal_loss = 0, 0
         with torch.no_grad():
-            for data, target in tqdm(self.val_loader, desc=f"(Validating) Epoch {epoch}"):
+            for data, target in tqdm(self.val_loader, desc=f"(Valid) Epoch {epoch}"):
                 target      = target.to(self.device)
-                output      = self.forward(data, self.device)
+                output      = self.forward(data)
                 l1_loss     = l1_criterion(output, target)
                 mal_loss    = mal_criterion(pitchyaw2xyz(output), pitchyaw2xyz(target))
                 val_l1_loss  += l1_loss.item()

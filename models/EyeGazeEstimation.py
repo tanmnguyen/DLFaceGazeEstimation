@@ -70,18 +70,20 @@ class EyeGazeEstimationModel(GazeEstimationModel):
             nn.Linear(in_features=4096, out_features=2),
         )
 
+        self.device = device
         self.to(device)
         
-    def forward(self, data, device): 
-        left, right = data[0].to(device), data[1].to(device)
-        # left eye image 
+    def forward(self, data): 
+        # left and right eye images 
+        left, right = data[0].to(self.device), data[1].to(self.device)
+        # forward left eye
         xEyeL = self.AlexNetConvModel(left)
-        xEyeL = xEyeL.view(xEyeL.size(0), -1).to(device)
-        # right eye image 
+        xEyeL = xEyeL.view(xEyeL.size(0), -1)
+        # forward right eye
         xEyeR = self.AlexNetConvModel(right)
-        xEyeR = xEyeR.view(xEyeR.size(0), -1).to(device)
+        xEyeR = xEyeR.view(xEyeR.size(0), -1)
         # concat both eye images for regression
-        xEyes = torch.cat((xEyeL, xEyeR), 1).to(device)
+        xEyes = torch.cat((xEyeL, xEyeR), 1)
         xEyes = self.regression(xEyes)
         # result
         return xEyes
