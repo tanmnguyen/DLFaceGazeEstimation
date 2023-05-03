@@ -27,6 +27,10 @@ class EyeDataset(Dataset):
 
         l_shape_0, l_shape_1, r_shape_0, r_shape_1 = 0, 0, 0, 0
         for i, img in enumerate(images):
+            # img = draw_gaze(img, torch.Tensor([labels[i]]).float())
+            # cv2.imshow("checking", img)
+            # cv2.waitKey(0)
+
             self.l_eye_imgs.append(img[
                 llmarks[i][1]: llmarks[i][3],
                 llmarks[i][0]: llmarks[i][2],

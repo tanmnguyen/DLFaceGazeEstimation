@@ -56,10 +56,11 @@ def read_images_and_labels(path: str, upper_bound: int):
                     image_file = os.path.join(folder_path, filename)
                     images.append(cv2.imread(image_file))
 
+            n_images = len(images)
             data_dict[folder] = {'images': np.array(images),
-                                 'labels': np.array(labels),
-                                 'left_landmarks': left_landmarks,
-                                 'right_landmarks': right_landmarks
+                                 'labels': np.array(labels)[:n_images],
+                                 'left_landmarks': np.array(left_landmarks)[:n_images],
+                                 'right_landmarks': np.array(right_landmarks)[:n_images]
                                 }
 
     return data_dict
