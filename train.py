@@ -4,7 +4,8 @@ import argparse
 import numpy as np
 
 from utils.file import build_loader
-from models.EyeGazeEstimation import EyeGazeEstimationModel
+from models.EyeGazeEstimationAlexNet import EyeGazeEstimationModelAlexNet
+from models.EyeGazeEstimationLeNet   import EyeGazeEstimationModelLeNet
 
 def main(args):
     # load data 
@@ -18,7 +19,7 @@ def main(args):
     # eye-gaze model
     if args.type == "eye":
         # init eye-based model
-        model = EyeGazeEstimationModel()
+        model = EyeGazeEstimationModelLeNet()
         # start traininggi
         model.fit(train_loader, val_loader, args.epochs)
 

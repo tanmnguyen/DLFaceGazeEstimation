@@ -69,10 +69,10 @@ class AlexNetRegrModel(nn.Module):
         x = self.features(x)
         return x
 
-class EyeGazeEstimationModel(GazeEstimationModel):
+class EyeGazeEstimationModelAlexNet(GazeEstimationModel):
     def __init__(self, device=available_device()):
         super(EyeGazeEstimationModel, self).__init__(device)
-        self.name = "EyeGazeEstimationModel.pt"
+        self.name = "EyeGazeEstimationModel-AlexNet.pt"
 
         self.AlexNetConvModel = AlexNetConvModel() 
         self.AlexNetRegrModel = AlexNetRegrModel()

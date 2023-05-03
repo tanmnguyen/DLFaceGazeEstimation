@@ -7,11 +7,11 @@ import numpy as np
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
-import matplotlib.pyplot as plt
 
 from tqdm import tqdm
 from utils.runtime import available_device
 from utils.general import pitchyaw2xyz, mean_abs_angle_loss
+from utils.plot import save_step_history, save_epoc_history
 
 class GazeEstimationModel(nn.Module):
     def __init__(self, device=available_device()):
@@ -21,43 +21,8 @@ class GazeEstimationModel(nn.Module):
         self.to(device)
 
     def _save_fig(self, dst_dir: str):
-        # Plot the training and validation losses
-        train_l1_loss = [h["l1_loss"] for h in self.train_step_history]
-        train_mal_loss = [h["mal_loss"] for h in self.train_step_history]
-        val_l1_loss = [h["l1_loss"] for h in self.val_step_history]
-        val_mal_loss = [h["mal_loss"] for h in self.val_step_history]
-
-        # Training L1 Loss
-        plt.figure()
-        plt.plot(train_l1_loss)
-        plt.title("Training L1 Loss")
-        plt.xlabel("Step")
-        plt.ylabel("Loss")
-        plt.savefig(os.path.join(dst_dir, "training_l1_loss.png"))
-
-        # Training Mal Loss
-        plt.figure()
-        plt.plot(train_mal_loss)
-        plt.title("Training Mean Absolute Angle Loss")
-        plt.xlabel("Step")
-        plt.ylabel("Loss")
-        plt.savefig(os.path.join(dst_dir, "training_mal_loss.png"))
-
-        # Validation L1 Loss
-        plt.figure()
-        plt.plot(val_l1_loss)
-        plt.title("Validation L1 Loss")
-        plt.xlabel("Step")
-        plt.ylabel("Loss")
-        plt.savefig(os.path.join(dst_dir, "validation_l1_loss.png"))
-
-        # Validation Mal Loss
-        plt.figure()
-        plt.plot(val_mal_loss)
-        plt.title("Validation Mean Absolute Angle Loss")
-        plt.xlabel("Step")
-        plt.ylabel("Loss")
-        plt.savefig(os.path.join(dst_dir, "validation_mal_loss.png"))
+        save_step_history(self.train_step_history, self.val_step_history, dst_dir)
+        save_epoc_history(self.epoch_history, dst_dir)
 
     def _learn(self, epoch, l1_criterion, mal_criterion, optimizer):
         self.train() 
@@ -126,15 +91,21 @@ class GazeEstimationModel(nn.Module):
         optimal_loss = None
         self.train_step_history = []
         self.val_step_history   = []
+        self.epoch_history      = []
         for epoch in range(epochs):
             train_l1_loss, train_mal_loss = self._learn(epoch + 1, l1_criterion, mal_criterion, optimizer)
             val_l1_loss, val_mal_loss     = self._eval(epoch + 1, l1_criterion, mal_criterion, optimizer)
-
+            # save training history per epoch
+            self.epoch_history.append({
+                "train_l1_loss": train_l1_loss,
+                "train_mal_loss": train_mal_loss,
+                "val_l1_loss": val_l1_loss,
+                "val_mal_loss": val_mal_loss
+            })
             # update and save the best model per epoch using mean absolute angle loss criteria
             if optimal_loss is None or optimal_loss > val_mal_loss:
                 optimal_loss = val_mal_loss 
                 torch.save(self.state_dict(), os.path.join(dst_dir, self.name))
-
             # log info
             print(f"Train Loss (L1): {train_l1_loss:.4f}, Train Loss (Mean Absolute Angle Loss): {train_mal_loss:4f}")
             print(f"Val Loss (L1):   {val_l1_loss:.4f}, Val Loss (Mean Absolute Angle Loss):   {val_mal_loss:.4f}")
