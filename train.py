@@ -5,7 +5,7 @@ import numpy as np
 
 from torch.utils.data import DataLoader
 from datasets.EyeDataset import EyeDataset
-# from datasets.FaceDataset import FaceDataset
+from datasets.FaceDataset import FaceDataset
 from models.EyeGazeEstimationAlexNet import EyeGazeEstimationModelAlexNet
 from models.EyeGazeEstimationLeNet   import EyeGazeEstimationModelLeNet
 from models.FaceGazeEstimationLeNet  import FaceGazeEstimationModelLeNet
@@ -15,6 +15,8 @@ train_list = [f"p{id:02}" for id in range(00, 14)]
 valid_list = [f"p{id:02}" for id in range(14, 15)]
 
 def main(args):
+    torch.manual_seed(0)
+
     # eye-gaze model
     if args.type == "eye":
         train_dataset = EyeDataset(args.data, train_list, lw_bound=args.lowerbound, up_bound=args.upperbound)
@@ -44,7 +46,10 @@ def main(args):
     model.fit(
         train_loader,
         valid_loader,
-        args.epochs
+        args.epochs,
+        lr=0.001,
+        decay_step_size=10,
+        decay_gamma=0.2,
     )
 
 if __name__ == '__main__':

@@ -39,15 +39,11 @@ class LeNetRegrModel(nn.Module):
         super(LeNetRegrModel, self).__init__()
         self.features = nn.Sequential(
 
-            nn.Linear(11520, 120),
+            nn.Linear(11520, 32),
             nn.ReLU(inplace=True),
-            nn.Dropout(0.8),
+            nn.Dropout(0.7),
 
-            nn.Linear(120, 84),
-            nn.ReLU(inplace=True),
-            nn.Dropout(0.8),
-
-            nn.Linear(84, 2),
+            nn.Linear(32, 2),
             nn.Tanh() # tanh activation function maps to (-1,1)
         )
 

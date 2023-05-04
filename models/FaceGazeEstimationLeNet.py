@@ -45,9 +45,10 @@ class LeNetRegrModel(nn.Module):
 
             nn.Linear(120, 84),
             nn.ReLU(inplace=True),
-            nn.Dropout(p=0.7),
+            nn.Dropout(p=0.5),
 
-            nn.Linear(84, 2)
+            nn.Linear(84, 2),
+            nn.Tanh() # tanh activation function maps to (-1,1)
         )
 
     def forward(self, x):

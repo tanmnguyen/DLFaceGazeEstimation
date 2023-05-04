@@ -74,12 +74,12 @@ class GazeEstimationModel(nn.Module):
                     "mal_loss": mal_loss.item()
                 })
 
-        val_l1_loss  /= len(self.val_loader)
-        val_mal_loss /= len(self.val_loader)
+            val_l1_loss  /= len(self.val_loader)
+            val_mal_loss /= len(self.val_loader)
         
         return val_l1_loss, val_mal_loss
 
-    def fit(self, train_loader, val_loader, epochs, lr=0.001):
+    def fit(self, train_loader, val_loader, epochs, lr, decay_step_size, decay_gamma):
         self.train_loader, self.val_loader = train_loader, val_loader 
 
         dst_dir = f"trains/train-{datetime.datetime.now().strftime('%Y%m%d %H%M%S')}"
@@ -87,6 +87,7 @@ class GazeEstimationModel(nn.Module):
 
         # optimizer, l1 loss, mean absolute angle loss criterions 
         optimizer, l1_criterion, mal_criterion = optim.Adam(self.parameters(), lr=lr), F.l1_loss, mean_abs_angle_loss
+        scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=decay_step_size, gamma=decay_gamma)
 
         optimal_loss = None
         self.train_step_history = []
@@ -95,6 +96,9 @@ class GazeEstimationModel(nn.Module):
         for epoch in range(epochs):
             train_l1_loss, train_mal_loss = self._learn(epoch + 1, l1_criterion, mal_criterion, optimizer)
             val_l1_loss, val_mal_loss     = self._eval(epoch + 1, l1_criterion, mal_criterion, optimizer)
+            # update learning rate
+            scheduler.step()
+
             # save training history per epoch
             self.epoch_history.append({
                 "train_l1_loss": train_l1_loss,
