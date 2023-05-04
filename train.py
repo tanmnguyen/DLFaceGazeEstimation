@@ -48,8 +48,8 @@ def main(args):
         valid_loader,
         args.epochs,
         lr=0.001,
-        decay_step_size=10,
-        decay_gamma=0.2,
+        decay_step_size=5,
+        decay_gamma=0.1,
     )
 
 if __name__ == '__main__':

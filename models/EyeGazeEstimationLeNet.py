@@ -18,16 +18,13 @@ class LeNetConvModel(nn.Module):
         super(LeNetConvModel, self).__init__()
 
         self.features = nn.Sequential(
-            nn.Conv2d(3, 6, kernel_size=5, padding=2),
+            nn.Conv2d(3, 6, kernel_size=5, stride=1, padding=0),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=2, stride=2),
 
-            nn.Conv2d(6, 16, kernel_size=5),
+            nn.Conv2d(6, 16, kernel_size=5, stride=1, padding=0),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=2, stride=2),
-
-            nn.Conv2d(16, 120, kernel_size=5),
-            nn.ReLU(inplace=True)
         )
 
     def forward(self, x):
@@ -38,13 +35,11 @@ class LeNetRegrModel(nn.Module):
     def __init__(self):
         super(LeNetRegrModel, self).__init__()
         self.features = nn.Sequential(
-
-            nn.Linear(11520, 32),
+            nn.Linear(3360,64),
             nn.ReLU(inplace=True),
-            nn.Dropout(0.7),
+            nn.Dropout(0.6),
 
-            nn.Linear(32, 2),
-            nn.Tanh() # tanh activation function maps to (-1,1)
+            nn.Linear(64, 2),
         )
 
     def forward(self, x):
