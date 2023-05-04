@@ -22,7 +22,11 @@ class LeNetConvModel(nn.Module):
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=2, stride=2),
 
-            nn.Conv2d(6, 16, kernel_size=5, stride=1, padding=0),
+            nn.Conv2d(6, 12, kernel_size=5, stride=1, padding=0),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+
+            nn.Conv2d(12, 16, kernel_size=5, stride=1, padding=0),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(kernel_size=2, stride=2),
         )
@@ -35,11 +39,11 @@ class LeNetRegrModel(nn.Module):
     def __init__(self):
         super(LeNetRegrModel, self).__init__()
         self.features = nn.Sequential(
-            nn.Linear(3360,64),
+            nn.Linear(160,84),
             nn.ReLU(inplace=True),
-            nn.Dropout(0.6),
+            nn.Dropout(0.85),
 
-            nn.Linear(64, 2),
+            nn.Linear(84, 2),
         )
 
     def forward(self, x):

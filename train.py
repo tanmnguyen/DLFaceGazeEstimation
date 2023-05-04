@@ -11,12 +11,11 @@ from models.EyeGazeEstimationLeNet    import EyeGazeEstimationModelLeNet
 from models.FaceGazeEstimationLeNet   import FaceGazeEstimationModelLeNet
 from models.FaceGazeEstimationAlexNet import FaceGazeEstimationAlexNetModel
 
-
 train_list = [f"p{id:02}" for id in range(00, 14)]
 valid_list = [f"p{id:02}" for id in range(14, 15)]
 
 def main(args):
-    torch.manual_seed(0)
+    # torch.manual_seed(0)
 
     # eye-gaze model
     if args.type == "eye":
@@ -48,8 +47,8 @@ def main(args):
         train_loader,
         valid_loader,
         args.epochs,
-        lr=0.001,
-        decay_step_size=5,
+        lr=0.0005,
+        decay_step_size=1000,
         decay_gamma=0.0,
     )
 
