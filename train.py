@@ -3,40 +3,55 @@ import torch
 import argparse
 import numpy as np
 
-from utils.file import build_loader
+from torch.utils.data import DataLoader
+from datasets.EyeDataset import EyeDataset
+# from datasets.FaceDataset import FaceDataset
 from models.EyeGazeEstimationAlexNet import EyeGazeEstimationModelAlexNet
 from models.EyeGazeEstimationLeNet   import EyeGazeEstimationModelLeNet
 from models.FaceGazeEstimationLeNet  import FaceGazeEstimationModelLeNet
 
-def main(args):
-    # load data 
-    train_loader, val_loader = build_loader(
-        args.path, 
-        args.lowerbound, 
-        args.upperbound,
-        batch_size=128,
-        loader_type=args.type,
-    )
 
+train_list = [f"p{id:02}" for id in range(00, 14)]
+valid_list = [f"p{id:02}" for id in range(14, 15)]
+
+def main(args):
     # eye-gaze model
     if args.type == "eye":
-        # init eye-based model
-        model = EyeGazeEstimationModelLeNet()
-        # start training
-        model.fit(train_loader, val_loader, args.epochs)
+        train_dataset = EyeDataset(args.data, train_list, lw_bound=args.lowerbound, up_bound=args.upperbound)
+        valid_dataset = EyeDataset(args.data, valid_list, lw_bound=args.lowerbound, up_bound=args.upperbound)
+        model         = EyeGazeEstimationModelLeNet()
 
     # face-gaze model
     if args.type == "face":
-        # init face-based model
-        model = FaceGazeEstimationModelLeNet()
-        # start training
-        model.fit(train_loader, val_loader, args.epochs)
-    
+        train_dataset = FaceDataset(args.data, train_list, lw_bound=args.lowerbound, up_bound=args.upperbound)
+        valid_dataset = FaceDataset(args.data, valid_list, lw_bound=args.lowerbound, up_bound=args.upperbound)
+        model         = FaceGazeEstimationModelLeNet()
+
+    # build data loader 
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=64,
+        shuffle=True
+    )
+
+    valid_loader = DataLoader(
+        valid_dataset, 
+        batch_size=64,
+        shuffle=False
+    )
+
+    # train model
+    model.fit(
+        train_loader,
+        valid_loader,
+        args.epochs
+    )
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='')
 
-    parser.add_argument('-path',
-                        '--path',
+    parser.add_argument('-data',
+                        '--data',
                         required=True,
                         help="path to training data file")
 
@@ -55,14 +70,14 @@ if __name__ == '__main__':
 
     parser.add_argument('-upperbound',
                         '--upperbound',
-                        default=sys.maxsize,
+                        default=3000 ,
                         type=int,
                         required=False,
                         help="upper bound for image per directory")
 
     parser.add_argument('-lowerbound',
                         '--lowerbound',
-                        default=-sys.maxsize - 1,
+                        default=0,
                         type=int,
                         required=False,
                         help="upper bound for image per directory")

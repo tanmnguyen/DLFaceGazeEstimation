@@ -5,6 +5,11 @@ import matplotlib.pyplot as plt
 
 from utils.general import pitchyaw2xyz
 
+def draw_bboxes(img, bboxes, color=[0,255,0]):
+    for box in bboxes:
+        img = cv2.rectangle(img, (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), color, 2)
+    return img 
+
 def draw_gaze(img, pitchyaw: torch.Tensor, scale: int = 200):
     gaze_vecs = pitchyaw2xyz(pitchyaw)
     center = (img.shape[1] // 2, img.shape[0] // 2)
