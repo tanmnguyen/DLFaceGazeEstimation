@@ -20,7 +20,11 @@ def main(args):
     # eye-gaze model
     if args.type == "eye":
         train_dataset = EyeDataset(args.data, train_list, lw_bound=args.lowerbound, up_bound=args.upperbound)
-        valid_dataset = EyeDataset(args.data, valid_list, lw_bound=args.lowerbound, up_bound=args.upperbound)
+        # simulate calibration process
+        for pid in valid_list:
+            train_dataset.add(args.data, pid, lw_bound=0, up_bound=100)
+
+        valid_dataset = EyeDataset(args.data, valid_list, lw_bound=100, up_bound=args.upperbound)
         model         = EyeGazeEstimationModelLeNet()
 
     # face-gaze model
@@ -48,8 +52,8 @@ def main(args):
         valid_loader,
         args.epochs,
         lr=0.0005,
-        decay_step_size=1000,
-        decay_gamma=0.0,
+        decay_step_size=20,
+        decay_gamma=0.1,
     )
 
 if __name__ == '__main__':
