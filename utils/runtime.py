@@ -3,7 +3,7 @@ import torch
 def available_device():
     # use cuda gpu 
     if torch.cuda.is_available():
-        return torch.device("cuda")
+        return torch.device("cuda:0")
     # use apple mps (unsupported for segmentation task by ultralytics yolov8)
     if torch.backends.mps.is_available():
         return torch.device("mps")

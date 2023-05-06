@@ -1,4 +1,5 @@
 import os
+import cv2 
 import torch
 import numpy as np
 
@@ -8,29 +9,34 @@ from utils.general import letterbox_resize
 
 class FaceDataset(Dataset):
     def __init__(self, data_dir: str, id_list: List[str], lw_bound: int, up_bound: int):
-        assert 0 <= up_bound <= 3000
-        assert 0 <= lw_bound <= 3000
-        assert lw_bound <= up_bound
-
         self.face = [] # face image 
         self.targ = [] # gaze direction
 
         for pid in id_list:
-            images = np.load(os.path.join(data_dir, pid, "images.npy"))[lw_bound:up_bound]
-            gazes  = np.load(os.path.join(data_dir, pid, "gazes.npy"))[lw_bound:up_bound]
+            self.add(data_dir, pid, lw_bound, up_bound)
 
-            self.face.extend([letterbox_resize(img, (224, 224)) for img in images])
-            self.targ.extend(gazes)
+    def add(self, data_dir, pid, lw_bound, up_bound):
+        assert 0 <= up_bound <= 3000
+        assert 0 <= lw_bound <= 3000
+        assert lw_bound <= up_bound
 
-        # to tensor
-        self.face, self.targ = np.array(self.face), np.array(self.targ)
+        images = np.load(os.path.join(data_dir, pid, "images.npy"))[lw_bound:up_bound]
+        gazes  = np.load(os.path.join(data_dir, pid, "gazes.npy"))[lw_bound:up_bound]
+        
+        face = np.array([letterbox_resize(img, (224, 224)) for img in images])
+        targ = np.array(gazes)
 
-        self.face = torch.Tensor(self.face).float()
-        self.targ = torch.Tensor(self.targ).float()
+        face = torch.Tensor(face).float()
+        targ = torch.Tensor(targ).float()
+        face = face.permute(0, 3, 1, 2)
 
-        # reshape
-        self.face = self.face.permute(0, 3, 1, 2)
-
+        if self.__len__() == 0:
+            self.face = face 
+            self.targ = targ 
+        else:
+            self.face = torch.cat([self.face, face], dim=0)
+            self.targ = torch.cat([self.targ, targ], dim=0)
+        
         # size check
         assert len(self.face) == len(self.targ)
 

@@ -20,25 +20,20 @@ class AlexNetConvModel(nn.Module):
         self.features = nn.Sequential(
             nn.Conv2d(in_channels=3, out_channels=64, kernel_size=11, stride=4, padding=2),
             nn.ReLU(inplace=True),
-            # nn.BatchNorm2d(64),
             nn.MaxPool2d(kernel_size=3, stride=2),
 
             nn.Conv2d(in_channels=64, out_channels=192, kernel_size=5, padding=2),
             nn.ReLU(inplace=True),
-            # nn.BatchNorm2d(192),
             nn.MaxPool2d(kernel_size=3, stride=2),
 
             nn.Conv2d(in_channels=192, out_channels=384, kernel_size=3, padding=1),
             nn.ReLU(inplace=True),
-            # nn.BatchNorm2d(384),
 
             nn.Conv2d(in_channels=384, out_channels=256, kernel_size=3, padding=1),
             nn.ReLU(inplace=True),
-            # nn.BatchNorm2d(256),
 
             nn.Conv2d(in_channels=256, out_channels=256, kernel_size=3, padding=1),
             nn.ReLU(inplace=True),
-            # nn.BatchNorm2d(256),
 
             nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
         )
@@ -53,11 +48,11 @@ class AlexNetRegrModel(nn.Module):
         self.features = nn.Sequential(
             nn.Linear(in_features=12544, out_features=4096),
             nn.ReLU(inplace=True),
-            nn.Dropout(0.7),
+            nn.Dropout(0.85),
 
             nn.Linear(in_features=4096, out_features=4096),
             nn.ReLU(inplace=True),
-            nn.Dropout(0.7),
+            nn.Dropout(0.85),
             
             nn.Linear(in_features=4096, out_features=2),
         )
@@ -66,9 +61,9 @@ class AlexNetRegrModel(nn.Module):
         x = self.features(x)
         return x
 
-class FaceGazeEstimationAlexNetModel(GazeEstimationModel):
+class FaceGazeEstimationModelAlexNet(GazeEstimationModel):
     def __init__(self, device=available_device()):
-        super(FaceGazeEstimationAlexNetModel, self).__init__(device)
+        super(FaceGazeEstimationModelAlexNet, self).__init__(device)
         self.name = "FaceGazeEstimationModel-AlexNet.pt"
 
         self.AlexNetConvModel = AlexNetConvModel() 
