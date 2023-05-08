@@ -50,9 +50,9 @@ class AlexNetRegrModel(nn.Module):
             nn.ReLU(inplace=True),
             nn.Dropout(0.85),
 
-            nn.Linear(in_features=4096, out_features=4096),
-            nn.ReLU(inplace=True),
-            nn.Dropout(0.85),
+            # nn.Linear(in_features=4096, out_features=4096),
+            # nn.ReLU(inplace=True),
+            # nn.Dropout(0.85),
             
             nn.Linear(in_features=4096, out_features=2),
         )
