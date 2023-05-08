@@ -9,8 +9,8 @@
 #SBATCH --mem-per-cpu=8G
 #SBATCH --account=Education-EEMCS-Courses-CSE3000
 
-module load 2022r2 py-pip cuda/11.6 openmpi/4.1.1 py-tqdm py-matplotlib py-pyyaml
+module load miniconda3
 
-pip install opencv-python==4.7.0.72 torch==2.0.0
+conda activate gaze 
 
 srun ./train.py --data ../../../../scratch/mnguyen1/MPIFaceGazeData --type face --epochs 20

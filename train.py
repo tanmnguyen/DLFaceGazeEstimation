@@ -15,7 +15,7 @@ train_list = [f"p{id:02}" for id in range(00, 14)]
 valid_list = [f"p{id:02}" for id in range(14, 15)]
 
 def main(args):
-    lw_bound, up_bound = int(0.1 * args.upperbound), args.upperbound
+    lw_bound, up_bound = int(0.2 * args.upperbound), args.upperbound
 
     # eye-gaze model
     if args.type == "eye":
@@ -42,13 +42,13 @@ def main(args):
     # build data loader 
     train_loader = DataLoader(
         train_dataset,
-        batch_size=64,
+        batch_size=128,
         shuffle=True
     )
 
     valid_loader = DataLoader(
         valid_dataset, 
-        batch_size=64,
+        batch_size=128,
         shuffle=False
     )
 
