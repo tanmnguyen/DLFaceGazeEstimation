@@ -85,6 +85,8 @@ class GazeEstimationModel(nn.Module):
         dst_dir = f"trains/train-{datetime.datetime.now().strftime('%Y%m%d %H%M%S')}"
         os.makedirs(dst_dir, exist_ok=True)
 
+        out_path = os.path.join(dst_dir, "output.txt")
+
         # optimizer, l1 loss, mean absolute angle loss criterions 
         optimizer, l1_criterion, mal_criterion = optim.Adam(self.parameters(), lr=lr), F.l1_loss, mean_abs_angle_loss
         scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=decay_step_size, gamma=decay_gamma)
@@ -106,6 +108,13 @@ class GazeEstimationModel(nn.Module):
                 "val_l1_loss": val_l1_loss,
                 "val_mal_loss": val_mal_loss
             })
+
+            with open(out_path, "a") as file:
+                file.write(f"Epoch {epoch + 1}:\n")
+                file.write(f"train_l1_loss {train_l1_loss:.4f}, train_mal_loss {train_mal_loss:.4f}\n")
+                file.write(f"val_l1_loss {val_l1_loss:.4f}, val_mal_loss {val_mal_loss:.4f}\n")
+                file.write("\n")
+ 
             # update and save the best model per epoch using mean absolute angle loss criteria
             if optimal_loss is None or optimal_loss > val_mal_loss:
                 optimal_loss = val_mal_loss 
