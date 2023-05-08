@@ -42,13 +42,13 @@ def main(args):
     # build data loader 
     train_loader = DataLoader(
         train_dataset,
-        batch_size=64,
+        batch_size=32,
         shuffle=True
     )
 
     valid_loader = DataLoader(
         valid_dataset, 
-        batch_size=64,
+        batch_size=32,
         shuffle=False
     )
 
