@@ -1,6 +1,7 @@
 import sys
 import torch
 import argparse
+import datetime
 import numpy as np
 
 from torch.utils.data import DataLoader
@@ -13,53 +14,52 @@ from models.FaceGazeEstimationAlexNet import FaceGazeEstimationModelAlexNet
 
 train_list = [f"p{id:02}" for id in range(00, 14)]
 valid_list = [f"p{id:02}" for id in range(14, 15)]
+dst_name   = f"train-{datetime.datetime.now().strftime('%Y%m%d %H%M%S')}"
 
 def main(args):
-    lw_bound, up_bound = int(0.2 * args.upperbound), args.upperbound
+    lw_bound, up_bound = int(0.1 * args.upperbound), args.upperbound
 
     # eye-gaze model
     if args.type == "eye":
         train_dataset = EyeDataset(args.data, train_list, lw_bound=0, up_bound=up_bound)
-
-        # simulate calibration process
-        for pid in valid_list:
-            train_dataset.add(args.data, pid, lw_bound=0, up_bound=lw_bound)
-
+        tuner_dataset = EyeDataset(args.data, valid_list, lw_bound=0, up_bound=lw_bound)
         valid_dataset = EyeDataset(args.data, valid_list, lw_bound=lw_bound, up_bound=up_bound)
         model         = EyeGazeEstimationModelLeNet()
 
     # face-gaze model
     if args.type == "face":
         train_dataset = FaceDataset(args.data, train_list, lw_bound=0, up_bound=up_bound)
-        
-        # simulate calibration process 
-        for pid in valid_list:
-            train_dataset.add(args.data, pid, lw_bound=0, up_bound=lw_bound)
-
+        tuner_dataset = FaceDataset(args.data, valid_list, lw_bound=0, up_bound=lw_bound)
         valid_dataset = FaceDataset(args.data, valid_list, lw_bound=lw_bound, up_bound=up_bound)
-        model         = FaceGazeEstimationModelAlexNet()
+        model         = FaceGazeEstimationModelLeNet()
 
-    # build data loader 
-    train_loader = DataLoader(
-        train_dataset,
-        batch_size=16,
-        shuffle=True
-    )
+    # build data loaders
+    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+    tuner_loader = DataLoader(tuner_dataset, batch_size=32, shuffle=True) 
+    valid_loader = DataLoader(valid_dataset, batch_size=32, shuffle=False)
 
-    valid_loader = DataLoader(
-        valid_dataset, 
-        batch_size=16,
-        shuffle=False
-    )
+    if args.model is not None:
+        model = torch.load(args.model)
+    else:
+        # train model 
+        model.fit(
+            train_loader,
+            valid_loader, 
+            epochs=args.epochs,
+            lr=0.0005,
+            dst_dir=f"trains/{dst_name}/train"
+        )
 
-    # train model
+    # freeze conv layer(s)
+    model.set_require_grad_conv(False)
+
+    # calibration (tune) model
     model.fit(
-        train_loader,
+        tuner_loader,
         valid_loader,
-        args.epochs,
+        epochs=50,
         lr=0.0005,
-        decay_step_size=20,
-        decay_gamma=0.1,
+        dst_dir=f"trains/{dst_name}/calibration"
     )
 
 if __name__ == '__main__':
@@ -69,6 +69,12 @@ if __name__ == '__main__':
                         '--data',
                         required=True,
                         help="path to training data file")
+
+    parser.add_argument('-model',
+                        '--model',
+                        type=str,
+                        required=False,
+                        help="path to model .pt file, do calibration only if this argument is provided")
 
     parser.add_argument('-epochs',
                         '--epochs',

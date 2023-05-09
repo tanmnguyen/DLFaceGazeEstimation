@@ -39,12 +39,11 @@ class LeNetRegrModel(nn.Module):
     def __init__(self):
         super(LeNetRegrModel, self).__init__()
         self.features = nn.Sequential(
-
-            nn.Linear(9216, 84),
+            nn.Linear(9216, 1024),
             nn.ReLU(inplace=True),
             nn.Dropout(p=0.85),
 
-            nn.Linear(84, 2),
+            nn.Linear(1024, 2),
         )
 
     def forward(self, x):
@@ -72,6 +71,3 @@ class FaceGazeEstimationModelLeNet(GazeEstimationModel):
         xFace = self.LeNetRegrModel(xFace)
         # result
         return xFace
-
-
-    

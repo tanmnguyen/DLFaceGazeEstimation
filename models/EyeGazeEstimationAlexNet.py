@@ -16,31 +16,9 @@ from models.GazeEstimation import GazeEstimationModel
 class AlexNetConvModel(nn.Module):
     def __init__(self):
         super(AlexNetConvModel, self).__init__()
-        self.features = nn.Sequential(
-            nn.Conv2d(in_channels=3, out_channels=64, kernel_size=11, stride=4, padding=2),
-            nn.ReLU(inplace=True),
-            # nn.BatchNorm2d(64),
-            nn.MaxPool2d(kernel_size=3, stride=2),
-
-            nn.Conv2d(in_channels=64, out_channels=192, kernel_size=5, padding=2),
-            nn.ReLU(inplace=True),
-            # nn.BatchNorm2d(192),
-            nn.MaxPool2d(kernel_size=3, stride=2),
-
-            nn.Conv2d(in_channels=192, out_channels=384, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            # nn.BatchNorm2d(384),
-
-            nn.Conv2d(in_channels=384, out_channels=256, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            # nn.BatchNorm2d(256),
-
-            nn.Conv2d(in_channels=256, out_channels=256, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            # nn.BatchNorm2d(256),
-
-            nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
-        )
+        self.features = models.alexnet(weights=models.AlexNet_Weights.DEFAULT).features
+        # Adjust subsequent layer configurations
+        self.features[-1] = nn.MaxPool2d(kernel_size=3, stride=1, padding=1)
 
     def forward(self, x):
         x = self.features(x)
@@ -50,7 +28,7 @@ class AlexNetRegrModel(nn.Module):
     def __init__(self):
         super(AlexNetRegrModel, self).__init__()
         self.features = nn.Sequential(
-            nn.Linear(in_features=1024, out_features=4096),
+            nn.Linear(in_features=1536, out_features=4096),
             nn.ReLU(inplace=True),
 
             nn.Linear(in_features=4096, out_features=4096),

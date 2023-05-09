@@ -58,7 +58,7 @@ def save_step_history(train_step_history, val_step_history, dst_dir):
     # Training Mal Loss
     plt.figure()
     plt.plot(train_mal_loss)
-    plt.title("Training Mean Absolute Angle Loss")
+    plt.title("Training Mean Angular Loss")
     plt.xlabel("Step")
     plt.ylabel("Loss")
     plt.savefig(os.path.join(dst_dir, "training_mal_loss.png"))
@@ -74,7 +74,7 @@ def save_step_history(train_step_history, val_step_history, dst_dir):
     # Validation Mal Loss
     plt.figure()
     plt.plot(val_mal_loss)
-    plt.title("Validation Mean Absolute Angle Loss")
+    plt.title("Validation Mean Angular Loss")
     plt.xlabel("Step")
     plt.ylabel("Loss")
     plt.savefig(os.path.join(dst_dir, "validation_mal_loss.png"))
