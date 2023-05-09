@@ -45,7 +45,7 @@ class AlexNetRegrModel(nn.Module):
     def __init__(self):
         super(AlexNetRegrModel, self).__init__()
         self.features = nn.Sequential(
-            nn.Linear(in_features=12544, out_features=2048),
+            nn.Linear(in_features=12544, out_features=512),
             nn.ReLU(inplace=True),
             nn.Dropout(0.85),
 
@@ -53,7 +53,7 @@ class AlexNetRegrModel(nn.Module):
             # nn.ReLU(inplace=True),
             # nn.Dropout(0.85),
             
-            nn.Linear(in_features=2048, out_features=2),
+            nn.Linear(in_features=512, out_features=2),
         )
 
     def forward(self, x):
