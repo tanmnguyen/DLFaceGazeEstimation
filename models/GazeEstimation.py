@@ -68,7 +68,7 @@ class GazeEstimationModel(nn.Module):
                     pitchyaw2xyz(output), 
                     pitchyaw2xyz(target)
                 )
-                
+
                 val_l1_loss  +=  l1_loss.item()
                 val_mal_loss += mal_loss.item()
 
@@ -117,6 +117,7 @@ class GazeEstimationModel(nn.Module):
             if optimal_loss is None or optimal_loss > val_mal_loss:
                 optimal_loss = val_mal_loss 
                 torch.save(self.state_dict(), os.path.join(dst_dir, self.name))
+                
             # log info
             print(f"Train Loss (L1): {train_l1_loss:.4f}, Train Loss (Mean Absolute Angle Loss): {train_mal_loss:4f}")
             print(f"Val Loss (L1):   {val_l1_loss:.4f}, Val Loss (Mean Angular Loss):   {val_mal_loss:.4f}")

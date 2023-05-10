@@ -15,35 +15,27 @@ class FaceDataset(Dataset):
         for pid in id_list:
             self.add(data_dir, pid, lw_bound, up_bound)
 
-    def add(self, data_dir, pid, lw_bound, up_bound):
-        assert 0 <= up_bound <= 3000
-        assert 0 <= lw_bound <= 3000
-        assert lw_bound <= up_bound
-
+    def _load_data(self, data_dir: str, pid: str, lw_bound: int, up_bound: int):
         images = np.load(os.path.join(data_dir, pid, "images.npy"))[lw_bound:up_bound]
         gazes  = np.load(os.path.join(data_dir, pid, "gazes.npy"))[lw_bound:up_bound]
-        
-        face = np.array([letterbox_resize(img, (224, 224)) for img in images])
-        targ = np.array(gazes)
 
-        face = torch.Tensor(face).float()
-        targ = torch.Tensor(targ).float()
-        face = face.permute(0, 3, 1, 2)
+        return images, gazes 
 
-        if self.__len__() == 0:
-            self.face = face 
-            self.targ = targ 
-        else:
-            self.face = torch.cat([self.face, face], dim=0)
-            self.targ = torch.cat([self.targ, targ], dim=0)
+    def add(self, data_dir, pid, lw_bound, up_bound):
+        images, gazes = self._load_data(data_dir, pid, lw_bound, up_bound)
+
+        self.face.extend([letterbox_resize(img, (224, 224)) for img in images])
+        self.targ.extend(gazes)
         
+    def __len__(self):
         # size check
         assert len(self.face) == len(self.targ)
-
-    def __len__(self):
+        # get length
         return len(self.targ)
 
     def __getitem__(self, idx):
-        return self.face[idx], self.targ[idx]
+        data = torch.Tensor(self.face[idx]).float().permute(2,0,1)
+        targ = torch.Tensor(self.targ[idx]).float()
+        return data, targ
 
 

@@ -20,17 +20,14 @@ class LeNetConvModel(nn.Module):
         self.features = nn.Sequential(
             nn.Conv2d(3, 6, kernel_size=5, stride=1, padding=0),
             nn.ReLU(inplace=True),
-            nn.BatchNorm2d(6),
             nn.MaxPool2d(kernel_size=2, stride=2),
 
             nn.Conv2d(6, 12, kernel_size=5, stride=1, padding=0),
             nn.ReLU(inplace=True),
-            nn.BatchNorm2d(12),
             nn.MaxPool2d(kernel_size=2, stride=2),
 
             nn.Conv2d(12, 16, kernel_size=5, stride=1, padding=0),
             nn.ReLU(inplace=True),
-            nn.BatchNorm2d(16),
             nn.MaxPool2d(kernel_size=2, stride=2),
         )
 
@@ -65,10 +62,6 @@ class EyeGazeEstimationModelLeNet(GazeEstimationModel):
         self.device = device
         self.to(device)
 
-    def set_require_grad_conv(self, requires_grad: bool):
-        for param in self.LeNetConvModel.parameters():
-            param.requires_grad = requires_grad
-        
     def forward(self, data): 
         # left and right eye images 
         left, right = data[0].to(self.device), data[1].to(self.device)

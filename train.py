@@ -21,45 +21,37 @@ def main(args):
 
     # eye-gaze model
     if args.type == "eye":
-        train_dataset = EyeDataset(args.data, train_list, lw_bound=0, up_bound=up_bound)
-        tuner_dataset = EyeDataset(args.data, valid_list, lw_bound=0, up_bound=lw_bound)
-        valid_dataset = EyeDataset(args.data, valid_list, lw_bound=lw_bound, up_bound=up_bound)
+        train_dataset = EyeDataset(args.data, train_list, 0, up_bound)
+        
+        # calibration process 
+        for pid in valid_list:
+            train_dataset.add(args.data, pid, 0, lw_bound)
+
+        valid_dataset = EyeDataset(args.data, valid_list, lw_bound, up_bound)
         model         = EyeGazeEstimationModelLeNet()
 
     # face-gaze model
     if args.type == "face":
-        train_dataset = FaceDataset(args.data, train_list, lw_bound=0, up_bound=up_bound)
-        tuner_dataset = FaceDataset(args.data, valid_list, lw_bound=0, up_bound=lw_bound)
-        valid_dataset = FaceDataset(args.data, valid_list, lw_bound=lw_bound, up_bound=up_bound)
+        train_dataset = FaceDataset(args.data, train_list, 0, up_bound)
+
+        # calibration process 
+        for pid in valid_list:
+            train_dataset.add(args.data, pid, 0, lw_bound)
+
+        valid_dataset = FaceDataset(args.data, valid_list, lw_bound, up_bound)
         model         = FaceGazeEstimationModelLeNet()
 
     # build data loaders
     train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-    tuner_loader = DataLoader(tuner_dataset, batch_size=32, shuffle=True) 
     valid_loader = DataLoader(valid_dataset, batch_size=32, shuffle=False)
 
-    if args.model is not None:
-        model = torch.load(args.model)
-    else:
-        # train model 
-        model.fit(
-            train_loader,
-            valid_loader, 
-            epochs=args.epochs,
-            lr=0.0005,
-            dst_dir=f"trains/{dst_name}/train"
-        )
-
-    # freeze conv layer(s)
-    model.set_require_grad_conv(False)
-
-    # calibration (tune) model
+    # train model 
     model.fit(
-        tuner_loader,
-        valid_loader,
-        epochs=50,
+        train_loader,
+        valid_loader, 
+        epochs=args.epochs,
         lr=0.0005,
-        dst_dir=f"trains/{dst_name}/calibration"
+        dst_dir=f"trains/{dst_name}"
     )
 
 if __name__ == '__main__':
@@ -69,12 +61,6 @@ if __name__ == '__main__':
                         '--data',
                         required=True,
                         help="path to training data file")
-
-    parser.add_argument('-model',
-                        '--model',
-                        type=str,
-                        required=False,
-                        help="path to model .pt file, do calibration only if this argument is provided")
 
     parser.add_argument('-epochs',
                         '--epochs',

@@ -17,22 +17,7 @@ class EyeDataset(Dataset):
         self.targ = [] # gaze direction 
 
         for pid in id_list:
-            images, gazes, lboxes, rboxes, lcorns, rcorns = self._load_data(data_dir, pid, lw_bound, up_bound)
-            for idx, img in enumerate(images):
-                try:
-                    leye_img = extract_bbox_img(img, lboxes[idx])
-                    reye_img = extract_bbox_img(img, rboxes[idx])
-                    # resize 
-                    leye_img = letterbox_resize(leye_img, (43, 73))
-                    reye_img = letterbox_resize(reye_img, (43, 73))
-                    # save 
-                    self.leye.append(leye_img)
-                    self.reye.append(reye_img)
-                    self.targ.append(gazes[idx])
-                except:
-                    pass 
-
-        self.leye, self.reye, self.targ = np.array(self.leye), np.array(self.reye), np.array(self.targ)
+            self.add(data_dir, pid, lw_bound, up_bound)
 
     def _load_data(self, data_dir: str, pid: str, lw_bound: int, up_bound: int):
         images = np.load(os.path.join(data_dir, pid, "images.npy"))[lw_bound:up_bound]
@@ -43,9 +28,25 @@ class EyeDataset(Dataset):
         rcorns = np.load(os.path.join(data_dir, pid, "r_eye_corners.npy"))[lw_bound:up_bound]
 
         return images, gazes, lboxes, rboxes, lcorns, rcorns
-        
+    
+    def add(self, data_dir, pid: str, lw_bound: int, up_bound: int):
+        images, gazes, lboxes, rboxes, lcorns, rcorns = self._load_data(data_dir, pid, lw_bound, up_bound)
+        for idx, img in enumerate(images):
+            try:
+                leye_img = extract_bbox_img(img, lboxes[idx])
+                reye_img = extract_bbox_img(img, rboxes[idx])
+                # resize 
+                leye_img = letterbox_resize(leye_img, (43, 73))
+                reye_img = letterbox_resize(reye_img, (43, 73))
+                # save 
+                self.leye.append(leye_img)
+                self.reye.append(reye_img)
+                self.targ.append(gazes[idx])
+            except:
+                pass 
+
     def __len__(self):
-        # safe check
+        # size check
         assert len(self.targ) == len(self.leye) == len(self.reye)
         # get length
         return len(self.targ)
