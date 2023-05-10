@@ -41,7 +41,8 @@ class LeNetRegrModel(nn.Module):
         self.features = nn.Sequential(
             nn.Linear(9216, 1024),
             nn.ReLU(inplace=True),
-            nn.Dropout(p=0.85),
+            nn.BatchNorm1d(1024),
+            # nn.Dropout(p=0.85),
 
             nn.Linear(1024, 2),
         )
