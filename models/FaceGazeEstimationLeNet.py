@@ -18,17 +18,15 @@ class LeNetConvModel(nn.Module):
         super(LeNetConvModel, self).__init__()
 
         self.features = nn.Sequential(
-            nn.Conv2d(3, 6, kernel_size=5, stride=1, padding=0),
+            nn.Conv2d(in_channels=3, out_channels=64, kernel_size=11, stride=4, padding=2),
             nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.BatchNorm2d(64),
+            nn.MaxPool2d(kernel_size=3, stride=2),
 
-            nn.Conv2d(6, 12, kernel_size=5, stride=1, padding=0),
+            nn.Conv2d(in_channels=64, out_channels=192, kernel_size=5, padding=2),
             nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-
-            nn.Conv2d(12, 16, kernel_size=5, stride=1, padding=0),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.BatchNorm2d(192),
+            nn.MaxPool2d(kernel_size=3, stride=2),
         )
 
     def forward(self, x):
@@ -39,12 +37,8 @@ class LeNetRegrModel(nn.Module):
     def __init__(self):
         super(LeNetRegrModel, self).__init__()
         self.features = nn.Sequential(
-            nn.Linear(9216, 1024),
-            nn.ReLU(inplace=True),
-            nn.BatchNorm1d(1024),
-            # nn.Dropout(p=0.85),
-
-            nn.Linear(1024, 2),
+            nn.Dropout(0.7),
+            nn.Linear(32448, 2),
         )
 
     def forward(self, x):

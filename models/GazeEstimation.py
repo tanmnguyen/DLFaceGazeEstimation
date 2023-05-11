@@ -89,7 +89,7 @@ class GazeEstimationModel(nn.Module):
         out_path = os.path.join(dst_dir, f"output.txt")
 
         # optimizer, l1 loss, mean absolute angle loss criterions 
-        optimizer, l1_criterion, mal_criterion = optim.AdamW(self.parameters(), lr=lr), F.l1_loss, angular_loss
+        optimizer, l1_criterion, mal_criterion = optim.AdamW(self.parameters(), lr=lr, weight_decay=0.5), F.l1_loss, angular_loss
 
         optimal_loss = None
         self.train_step_history = []
@@ -113,11 +113,11 @@ class GazeEstimationModel(nn.Module):
                 file.write(f"val_l1_loss {val_l1_loss:.4f}, val_mal_loss {val_mal_loss:.4f}\n")
                 file.write("\n")
  
-            # update and save the best model per epoch using mean absolute angle loss criteria
+            # update and save the best model per epoch using mean angular loss criteria
             if optimal_loss is None or optimal_loss > val_mal_loss:
                 optimal_loss = val_mal_loss 
                 torch.save(self.state_dict(), os.path.join(dst_dir, self.name))
-                
+
             # log info
             print(f"Train Loss (L1): {train_l1_loss:.4f}, Train Loss (Mean Absolute Angle Loss): {train_mal_loss:4f}")
             print(f"Val Loss (L1):   {val_l1_loss:.4f}, Val Loss (Mean Angular Loss):   {val_mal_loss:.4f}")

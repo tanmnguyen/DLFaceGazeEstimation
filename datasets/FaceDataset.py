@@ -16,8 +16,8 @@ class FaceDataset(Dataset):
             self.add(data_dir, pid, lw_bound, up_bound)
 
     def _load_data(self, data_dir: str, pid: str, lw_bound: int, up_bound: int):
-        images = np.load(os.path.join(data_dir, pid, "images.npy"))[lw_bound:up_bound]
-        gazes  = np.load(os.path.join(data_dir, pid, "gazes.npy"))[lw_bound:up_bound]
+        images = np.load(os.path.join(data_dir, pid, "images.npy"), mmap_mode='c')[lw_bound:up_bound]
+        gazes  = np.load(os.path.join(data_dir, pid, "gazes.npy"),  mmap_mode='c')[lw_bound:up_bound]
 
         return images, gazes 
 

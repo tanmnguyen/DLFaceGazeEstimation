@@ -20,12 +20,12 @@ class EyeDataset(Dataset):
             self.add(data_dir, pid, lw_bound, up_bound)
 
     def _load_data(self, data_dir: str, pid: str, lw_bound: int, up_bound: int):
-        images = np.load(os.path.join(data_dir, pid, "images.npy"))[lw_bound:up_bound]
-        gazes  = np.load(os.path.join(data_dir, pid, "gazes.npy"))[lw_bound:up_bound]
-        lboxes = np.load(os.path.join(data_dir, pid, "l_eye_bboxes.npy"))[lw_bound:up_bound]
-        rboxes = np.load(os.path.join(data_dir, pid, "r_eye_bboxes.npy"))[lw_bound:up_bound]
-        lcorns = np.load(os.path.join(data_dir, pid, "l_eye_corners.npy"))[lw_bound:up_bound]
-        rcorns = np.load(os.path.join(data_dir, pid, "r_eye_corners.npy"))[lw_bound:up_bound]
+        images = np.load(os.path.join(data_dir, pid, "images.npy"),        mmap_mode='c')[lw_bound:up_bound]
+        gazes  = np.load(os.path.join(data_dir, pid, "gazes.npy"),         mmap_mode='c')[lw_bound:up_bound]
+        lboxes = np.load(os.path.join(data_dir, pid, "l_eye_bboxes.npy"),  mmap_mode='c')[lw_bound:up_bound]
+        rboxes = np.load(os.path.join(data_dir, pid, "r_eye_bboxes.npy"),  mmap_mode='c')[lw_bound:up_bound]
+        lcorns = np.load(os.path.join(data_dir, pid, "l_eye_corners.npy"), mmap_mode='c')[lw_bound:up_bound]
+        rcorns = np.load(os.path.join(data_dir, pid, "r_eye_corners.npy"), mmap_mode='c')[lw_bound:up_bound]
 
         return images, gazes, lboxes, rboxes, lcorns, rcorns
     

@@ -7,10 +7,11 @@ import numpy as np
 from torch.utils.data import DataLoader
 from datasets.EyeDataset import EyeDataset
 from datasets.FaceDataset import FaceDataset
-from models.EyeGazeEstimationAlexNet  import EyeGazeEstimationModelAlexNet
-from models.EyeGazeEstimationLeNet    import EyeGazeEstimationModelLeNet
-from models.FaceGazeEstimationLeNet   import FaceGazeEstimationModelLeNet
-from models.FaceGazeEstimationAlexNet import FaceGazeEstimationModelAlexNet
+from models.EyeGazeEstimationAlexNet   import EyeGazeEstimationModelAlexNet
+from models.EyeGazeEstimationLeNet     import EyeGazeEstimationModelLeNet
+from models.FaceGazeEstimationLeNet    import FaceGazeEstimationModelLeNet
+from models.FaceGazeEstimationAlexNet  import FaceGazeEstimationModelAlexNet
+from models.FaceGazeEstimationResNet18 import FaceGazeEstimationModelResNet18
 
 train_list = [f"p{id:02}" for id in range(00, 14)]
 valid_list = [f"p{id:02}" for id in range(14, 15)]
@@ -39,7 +40,8 @@ def main(args):
             train_dataset.add(args.data, pid, 0, lw_bound)
 
         valid_dataset = FaceDataset(args.data, valid_list, lw_bound, up_bound)
-        model         = FaceGazeEstimationModelLeNet()
+        # model         = FaceGazeEstimationModelLeNet()
+        model = FaceGazeEstimationModelResNet18()
 
     # build data loaders
     train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
