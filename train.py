@@ -38,7 +38,8 @@ def main(args):
     print("Train Dataset:", train_dataset.__len__())
     print("Tuner Dataset:", tuner_dataset.__len__())
     print("Valid Dataset:", valid_dataset.__len__())
-
+    print("Device:", model.device)
+    
     # build data loaders
     train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
     tuner_loader = DataLoader(tuner_dataset, batch_size=32, shuffle=True)
