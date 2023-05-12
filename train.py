@@ -58,7 +58,7 @@ def main(args):
 
     # tuning configuration
     model.tune_config()
-    model.device=torch.device('cpu')
+    # model.device=torch.device('cpu')
     
     # tune model
     model.fit(
