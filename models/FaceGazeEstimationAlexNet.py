@@ -74,7 +74,6 @@ class FaceGazeEstimationModelAlexNet(GazeEstimationModel):
         self.AlexNetRegrModel = AlexNetRegrModel()
 
         self.device = device
-        self.to(device)
         
     def forward(self, data): 
         # facial image 

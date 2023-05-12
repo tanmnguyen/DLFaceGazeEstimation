@@ -18,7 +18,6 @@ class GazeEstimationModel(nn.Module):
         super(GazeEstimationModel, self).__init__()
         self.name  = "gaze-estimation-model.pt"
         self.device = device 
-        self.to(device)
 
     def _save_fig(self, dst_dir: str):
         save_step_history(self.train_step_history, self.val_step_history, dst_dir)
@@ -83,6 +82,9 @@ class GazeEstimationModel(nn.Module):
         return val_l1_loss, val_mal_loss
 
     def fit(self, train_loader, val_loader, epochs: int, lr: float, dst_dir: str):
+        # load to computation device 
+        self.to(self.device)
+        
         self.train_loader, self.val_loader = train_loader, val_loader 
 
         os.makedirs(dst_dir, exist_ok=True)
@@ -98,7 +100,7 @@ class GazeEstimationModel(nn.Module):
         for epoch in range(epochs):
             train_l1_loss, train_mal_loss = self._train_net(epoch + 1, l1_criterion, mal_criterion, optimizer)
             val_l1_loss, val_mal_loss     = self._eval_net(epoch + 1, l1_criterion, mal_criterion, optimizer)
- 
+            
             # save training history per epoch
             self.epoch_history.append({
                 "train_l1_loss": train_l1_loss,

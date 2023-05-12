@@ -50,7 +50,6 @@ class EyeGazeEstimationModelAlexNet(GazeEstimationModel):
         self.AlexNetRegrModel = AlexNetRegrModel()
 
         self.device = device
-        self.to(device)
         
     def forward(self, data): 
         # left and right eye images 

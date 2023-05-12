@@ -23,8 +23,13 @@ class FaceGazeEstimationModelResNet18(GazeEstimationModel):
         self.model.fc = nn.Linear(512, 2)
         # device configuration
         self.device = device
-        self.to(device)
-        
+
+    def tune_config(self):
+        # Freeze all Batch Normalization (BN) layers
+        for name, param in self.model.named_parameters():
+            if 'bn' in name:
+                param.requires_grad = False
+
     def forward(self, data): 
         # facial image 
         data = data.to(self.device)

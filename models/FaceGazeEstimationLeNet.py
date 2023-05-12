@@ -54,7 +54,6 @@ class FaceGazeEstimationModelLeNet(GazeEstimationModel):
         self.LeNetRegrModel = LeNetRegrModel()
 
         self.device = device
-        self.to(device)
         
     def forward(self, data): 
         # facial image 

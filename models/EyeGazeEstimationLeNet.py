@@ -60,7 +60,6 @@ class EyeGazeEstimationModelLeNet(GazeEstimationModel):
         self.LeNetRegrModel = LeNetRegrModel()
 
         self.device = device
-        self.to(device)
 
     def forward(self, data): 
         # left and right eye images 
