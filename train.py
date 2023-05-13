@@ -38,7 +38,6 @@ def main(args):
     print("Train Dataset:", train_dataset.__len__())
     print("Tuner Dataset:", tuner_dataset.__len__())
     print("Valid Dataset:", valid_dataset.__len__())
-    print("Device:", model.device)
 
     # pre-tune data 
     train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)

@@ -103,6 +103,8 @@ class GazeEstimationModel(nn.Module):
 
         os.makedirs(dst_dir, exist_ok=True)
 
+        print("Computation Device:", self.device)
+
     def fit(self, train_loader, valid_loader, epochs: int, lr: float, dst_dir: str):
         self._config(train_loader, valid_loader, lr, dst_dir)
         self.train_step_history = []
