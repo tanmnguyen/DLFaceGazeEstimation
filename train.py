@@ -4,10 +4,11 @@ import argparse
 import datetime
 import numpy as np
 
-from utils.file import load_model
+from utils.file           import load_model
 from torch.utils.data     import DataLoader
 from datasets.EyeDataset  import EyeDataset
 from datasets.FaceDataset import FaceDataset
+from utils.runtime        import available_device
 from models.EyeGazeEstimationAlexNet   import EyeGazeEstimationModelAlexNet
 from models.EyeGazeEstimationLeNet     import EyeGazeEstimationModelLeNet
 from models.FaceGazeEstimationLeNet    import FaceGazeEstimationModelLeNet
@@ -35,6 +36,8 @@ def main(args):
         valid_dataset = FaceDataset(args.data, valid_list, lw_bound, up_bound)
         model         = FaceGazeEstimationModelAlexNet()
         
+    model = model.to(available_device())
+
     print("Train Dataset:", train_dataset.__len__())
     print("Tuner Dataset:", tuner_dataset.__len__())
     print("Valid Dataset:", valid_dataset.__len__())
