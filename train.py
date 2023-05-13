@@ -33,16 +33,18 @@ def main(args):
         train_dataset = FaceDataset(args.data, train_list, 0, up_bound)
         tuner_dataset = FaceDataset(args.data, valid_list, 0, lw_bound)
         valid_dataset = FaceDataset(args.data, valid_list, lw_bound, up_bound)
-        model         = FaceGazeEstimationModelResNet18(device='cpu')
-
+        model         = FaceGazeEstimationModelAlexNet()
+        
     print("Train Dataset:", train_dataset.__len__())
     print("Tuner Dataset:", tuner_dataset.__len__())
     print("Valid Dataset:", valid_dataset.__len__())
     print("Device:", model.device)
-    
-    # build data loaders
+
+    # pre-tune data 
     train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+    # fine-tune data 
     tuner_loader = DataLoader(tuner_dataset, batch_size=32, shuffle=True)
+    # validation data 
     valid_loader = DataLoader(valid_dataset, batch_size=32, shuffle=False)
 
     if args.model is not None:
@@ -53,20 +55,19 @@ def main(args):
             train_loader,
             valid_loader, 
             epochs=args.epochs,
-            lr=0.0005,
+            lr=0.0001,
             dst_dir=f"trains/{dst_name}/train"
         )
 
     # tuning configuration
     model.tune_config()
-    # model.device=torch.device('cpu')
-    
+
     # tune model
     model.fit(
         tuner_loader, 
         valid_loader, 
         epochs=100,
-        lr=0.0005,
+        lr=0.0001,
         dst_dir=f"trains/{dst_name}/tune(calibration)"
     )
 

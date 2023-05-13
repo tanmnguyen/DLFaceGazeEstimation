@@ -1,9 +1,11 @@
 import os
 import cv2 
 import torch
+import torchvision
 import numpy as np
 
 from typing import List
+from utils.plot import draw_gaze
 from torch.utils.data import Dataset
 from utils.general import letterbox_resize
 
@@ -11,6 +13,16 @@ class FaceDataset(Dataset):
     def __init__(self, data_dir: str, id_list: List[str], lw_bound: int, up_bound: int):
         self.face = [] # face image 
         self.targ = [] # gaze direction
+        self.transform = torchvision.transforms.Compose([
+            torchvision.transforms.Lambda(lambda x: letterbox_resize(x, (448, 448))), # resize 
+            torchvision.transforms.Lambda(lambda x: x.transpose(2, 0, 1)), # re-order dimension
+            torchvision.transforms.Lambda(lambda x: x.astype(np.float32) / 255), # scale 
+            torch.from_numpy,   # to tensor 
+            torchvision.transforms.Normalize(
+                mean = [0.406, 0.456, 0.485],
+                std  = [0.225, 0.224, 0.229]
+            ), 
+        ])
 
         for pid in id_list:
             self.add(data_dir, pid, lw_bound, up_bound)
@@ -24,7 +36,7 @@ class FaceDataset(Dataset):
     def add(self, data_dir, pid, lw_bound, up_bound):
         images, gazes = self._load_data(data_dir, pid, lw_bound, up_bound)
 
-        self.face.extend([letterbox_resize(img, (224, 224)) for img in images])
+        self.face.extend(images)
         self.targ.extend(gazes)
         
     def __len__(self):
@@ -34,8 +46,8 @@ class FaceDataset(Dataset):
         return len(self.targ)
 
     def __getitem__(self, idx):
-        data = torch.Tensor(self.face[idx]).float().permute(2,0,1)
-        targ = torch.Tensor(self.targ[idx]).float()
+        data = self.transform(self.face[idx])
+        targ = torch.Tensor(self.targ[idx])
         return data, targ
 
 

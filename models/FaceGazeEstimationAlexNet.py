@@ -6,6 +6,7 @@ import math
 import torch
 import traceback
 import torch.nn as nn
+import torch.nn.functional as F
 import torchvision.models as models
 
 from tqdm import tqdm
@@ -13,78 +14,31 @@ from utils.general import pitchyaw2xyz
 from utils.runtime import available_device
 from models.GazeEstimation import GazeEstimationModel
 
-class AlexNetConvModel(nn.Module):
-    def __init__(self):
-        super(AlexNetConvModel, self).__init__()
-
-        self.features = nn.Sequential(
-            nn.Conv2d(in_channels=3, out_channels=64, kernel_size=11, stride=4, padding=2),
-            nn.ReLU(inplace=True),
-            nn.BatchNorm2d(64),
-            nn.MaxPool2d(kernel_size=3, stride=2),
-
-            nn.Conv2d(in_channels=64, out_channels=192, kernel_size=5, padding=2),
-            nn.ReLU(inplace=True),
-            nn.BatchNorm2d(192),
-            nn.MaxPool2d(kernel_size=3, stride=2),
-
-            nn.Conv2d(in_channels=192, out_channels=384, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.BatchNorm2d(384),
-
-            nn.Conv2d(in_channels=384, out_channels=256, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.BatchNorm2d(256),
-
-            nn.Conv2d(in_channels=256, out_channels=256, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.BatchNorm2d(256),
-
-            nn.Conv2d(in_channels=256, out_channels=1, kernel_size=1), # reduce channel
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
-
-        )
-
-    def forward(self, x):
-        x = self.features(x)
-        return x
-
-class AlexNetRegrModel(nn.Module):
-    def __init__(self):
-        super(AlexNetRegrModel, self).__init__()
-        self.features = nn.Sequential(
-            # nn.Linear(in_features=12544, out_features=4), 
-            # nn.ReLU(inplace=True),
-            # nn.BatchNorm1d(4),
-
-            nn.Linear(in_features=49, out_features=2),
-        )
-
-    def forward(self, x):
-        x = self.features(x)
-        return x
-
 class FaceGazeEstimationModelAlexNet(GazeEstimationModel):
     def __init__(self, device=available_device()):
         super(FaceGazeEstimationModelAlexNet, self).__init__(device)
         self.name = "FaceGazeEstimationModel-AlexNet.pt"
 
-        self.AlexNetConvModel = AlexNetConvModel() 
-        self.AlexNetRegrModel = AlexNetRegrModel()
+        self.features = models.alexnet(weights=models.AlexNet_Weights.DEFAULT).features
+
+        # RGB order to BGR 
+        module = getattr(self.features, '0')
+        module.weight.data = module.weight.data[:, [2, 1, 0]]
+
+        self.fc1 = nn.Linear(256 * 13**2, 4096)
+        self.fc2 = nn.Linear(4096, 4096)
+        self.fc3 = nn.Linear(4096, 2)
 
         self.device = device
-        
+
     def forward(self, data): 
-        # facial image 
-        data = data.to(self.device)
-        # forward face image 
-        xFace = self.AlexNetConvModel(data)
-        xFace = xFace.view(xFace.size(0), -1)
-        # regression face image 
-        xFace = self.AlexNetRegrModel(xFace)
-        # result
-        return xFace
+        x = data.to(self.device)
+        x = self.features(x)
+        x = x.view(x.size(0), -1)
+        x = F.dropout(F.relu(self.fc1(x)), p=0.5, training=self.training)
+        x = F.dropout(F.relu(self.fc2(x)), p=0.5, training=self.training)
+        x = self.fc3(x)
+        return x
 
 
     

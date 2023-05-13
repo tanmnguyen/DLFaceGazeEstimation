@@ -18,17 +18,12 @@ class FaceGazeEstimationModelResNet18(GazeEstimationModel):
         super(FaceGazeEstimationModelResNet18, self).__init__(device)
         self.name = "FaceGazeEstimationModel-ResNet18.pt"
         # init resnet 18 with pre-trained weight 
-        self.model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
+        self.model = models.resnet18()
         # modify output layer 
         self.model.fc = nn.Linear(512, 2)
         # device configuration
         self.device = device
 
-    def tune_config(self):
-        # Freeze all Batch Normalization (BN) layers
-        for name, param in self.model.named_parameters():
-            if 'bn' in name:
-                param.requires_grad = False
 
     def forward(self, data): 
         # facial image 
