@@ -16,7 +16,7 @@ from models.GazeEstimation import GazeEstimationModel
 class AlexNetConvModel(nn.Module):
     def __init__(self):
         super(AlexNetConvModel, self).__init__()
-        self.features = models.alexnet(weights=models.AlexNet_Weights.DEFAULT).features
+        self.features = models.alexnet().features
         # Adjust subsequent layer configurations
         self.features[-1] = nn.MaxPool2d(kernel_size=3, stride=1, padding=1)
 
@@ -28,13 +28,9 @@ class AlexNetRegrModel(nn.Module):
     def __init__(self):
         super(AlexNetRegrModel, self).__init__()
         self.features = nn.Sequential(
-            nn.Linear(in_features=1536, out_features=4096),
-            nn.ReLU(inplace=True),
-
-            nn.Linear(in_features=4096, out_features=4096),
-            nn.ReLU(inplace=True),
-            
-            nn.Linear(in_features=4096, out_features=2),
+            nn.BatchNorm1d(1536),
+            nn.Dropout(0.5),
+            nn.Linear(in_features=1536, out_features=2),
         )
 
     def forward(self, x):

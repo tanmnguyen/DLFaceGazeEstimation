@@ -20,32 +20,32 @@ def draw_gaze(img, pitchyaw: torch.Tensor, scale: int = 200):
 
 def save_epoc_history(epoch_history, dst_dir):
     # Extract the data from epoch_history
-    train_l1_losses = [epoch["train_l1_loss"]   for epoch in epoch_history]
-    train_mal_losses = [epoch["train_mal_loss"] for epoch in epoch_history]
-    val_l1_losses = [epoch["val_l1_loss"]       for epoch in epoch_history]
-    val_mal_losses = [epoch["val_mal_loss"]     for epoch in epoch_history]
+    train_l1_losses = [epoch["train_l1_loss"] for epoch in epoch_history]
+    train_ma_losses = [epoch["train_ma_loss"] for epoch in epoch_history]
+    valid_l1_losses = [epoch["valid_l1_loss"] for epoch in epoch_history]
+    valid_ma_losses = [epoch["valid_ma_loss"] for epoch in epoch_history]
 
     # Create the subplots
     fig, (ax1, ax2) = plt.subplots(2, 1)
 
     # Plot the L1 losses in the first subplot
     ax1.plot(train_l1_losses, label="Train L1 Loss")
-    ax1.plot(val_l1_losses, label="Val L1 Loss")
+    ax1.plot(valid_l1_losses, label="Valid L1 Loss")
     ax1.legend()
 
     # Plot the Mal losses in the second subplot
-    ax2.plot(train_mal_losses, label="Train Mal Loss")
-    ax2.plot(val_mal_losses, label="Val Mal Loss")
+    ax2.plot(train_ma_losses, label="Train Ma Loss")
+    ax2.plot(valid_ma_losses, label="Valid Ma Loss")
     ax2.legend()
     # save both plots in one figure as a PNG file
     plt.savefig(os.path.join(dst_dir, 'epoch_losses.png'))
 
-def save_step_history(train_step_history, val_step_history, dst_dir):
+def save_step_history(train_step_history, valid_step_history, dst_dir):
     # Plot the training and validation losses
     train_l1_loss = [h["l1_loss"] for h in train_step_history]
-    train_mal_loss = [h["mal_loss"] for h in train_step_history]
-    val_l1_loss = [h["l1_loss"] for h in val_step_history]
-    val_mal_loss = [h["mal_loss"] for h in val_step_history]
+    train_ma_loss = [h["ma_loss"] for h in train_step_history]
+    valid_l1_loss = [h["l1_loss"] for h in valid_step_history]
+    valid_ma_loss = [h["ma_loss"] for h in valid_step_history]
 
     # Training L1 Loss
     plt.figure()
@@ -57,15 +57,15 @@ def save_step_history(train_step_history, val_step_history, dst_dir):
 
     # Training Mal Loss
     plt.figure()
-    plt.plot(train_mal_loss)
+    plt.plot(train_ma_loss)
     plt.title("Training Mean Angular Loss")
     plt.xlabel("Step")
     plt.ylabel("Loss")
-    plt.savefig(os.path.join(dst_dir, "training_mal_loss.png"))
+    plt.savefig(os.path.join(dst_dir, "training_ma_loss.png"))
 
     # Validation L1 Loss
     plt.figure()
-    plt.plot(val_l1_loss)
+    plt.plot(valid_l1_loss)
     plt.title("Validation L1 Loss")
     plt.xlabel("Step")
     plt.ylabel("Loss")
@@ -73,8 +73,8 @@ def save_step_history(train_step_history, val_step_history, dst_dir):
 
     # Validation Mal Loss
     plt.figure()
-    plt.plot(val_mal_loss)
+    plt.plot(valid_ma_loss)
     plt.title("Validation Mean Angular Loss")
     plt.xlabel("Step")
     plt.ylabel("Loss")
-    plt.savefig(os.path.join(dst_dir, "validation_mal_loss.png"))
+    plt.savefig(os.path.join(dst_dir, "validation_ma_loss.png"))

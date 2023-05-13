@@ -1,13 +1,35 @@
 import sys
 sys.path.append('../')
 
-import os, cv2
+import os
+import cv2
+import torch 
 import numpy as np
 
-from dataset import EyeDataset, FaceDataset
-
+from datasets import EyeDataset, FaceDataset
 from utils.general import split_train_val_indices
 from torch.utils.data import Dataset, DataLoader
+
+from models.EyeGazeEstimationAlexNet   import EyeGazeEstimationModelAlexNet
+from models.EyeGazeEstimationLeNet     import EyeGazeEstimationModelLeNet
+from models.FaceGazeEstimationLeNet    import FaceGazeEstimationModelLeNet
+from models.FaceGazeEstimationAlexNet  import FaceGazeEstimationModelAlexNet
+
+def load_model(model_path: str):
+    models = [
+        EyeGazeEstimationModelAlexNet(),
+        EyeGazeEstimationModelLeNet(),
+        FaceGazeEstimationModelLeNet(),
+        FaceGazeEstimationModelAlexNet(),
+    ]
+
+    model_name = os.path.basename(model_path).split('.')[0]
+    for model in models:
+        if model_name in model.name:
+            model.load_state_dict(torch.load(model_path))
+            return model
+    
+    return None
 
 def read_images_and_labels(path: str, upper_bound: int):
     """
