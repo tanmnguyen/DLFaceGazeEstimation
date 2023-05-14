@@ -12,8 +12,14 @@ cd DLFaceGazeEstimation/
 pip install -r requirements.txt
 ```
 # Training
+To run the train program with eye-only model:
 ```bash
-python train.py --data path/to/training/data --type [eye/face] --epochs 20
+python train.py --data path/to/training/data --type eye --epochs 20 --testid 14
 ```
+To run the train program with full face model:
+```bash
+python train.py --data path/to/training/data --type face --epochs 20 --testid 14
+```
+The `testid` argument specifies test subject. The training will be performed on the remaining 14 people data. 
 
 **Note:** It should be noted that the present work constitutes ongoing research, and as such, modifications are expected to occur on a regular basis.

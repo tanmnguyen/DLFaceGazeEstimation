@@ -100,7 +100,7 @@ class GazeEstimationModel(nn.Module):
         self.ma_loss      = angular_loss   # mean angular  loss 
         self.train_loader = train_loader   
         self.valid_loader = valid_loader 
-        self.optimizer    = torch.optim.AdamW(self.parameters(), lr=lr, weight_decay=0.5)
+        self.optimizer    = torch.optim.Adam(self.parameters(), lr=lr)
         self.to(self.device)
 
         os.makedirs(dst_dir, exist_ok=True)
