@@ -59,7 +59,7 @@ if __name__ == '__main__':
                         '--model',
                         type=str,
                         required=True,
-                        help="path to model .pt file. Only do calibration tuning if this argument is provided")
+                        help="path to a pretrained model .pt file")
 
     parser.add_argument('-epochs',
                         '--epochs',
