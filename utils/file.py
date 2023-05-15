@@ -10,24 +10,24 @@ from datasets import EyeDataset, FaceDataset
 from utils.general import split_train_val_indices
 from torch.utils.data import Dataset, DataLoader
 
-from models.EyeGazeEstimationAlexNet   import EyeGazeEstimationModelAlexNet
-from models.EyeGazeEstimationLeNet     import EyeGazeEstimationModelLeNet
-from models.FaceGazeEstimationLeNet    import FaceGazeEstimationModelLeNet
-from models.FaceGazeEstimationAlexNet  import FaceGazeEstimationModelAlexNet
+from models.FaceGazeEstimationResNet18 import FaceGazeEstimationModelResNet18
+from models.EyeGazeEstimationResNet18  import EyeGazeEstimationModelResNet18
 
 def load_model(model_path: str):
     models = [
-        EyeGazeEstimationModelAlexNet(),
-        EyeGazeEstimationModelLeNet(),
-        FaceGazeEstimationModelLeNet(),
-        FaceGazeEstimationModelAlexNet(),
+        FaceGazeEstimationModelResNet18(),
+        EyeGazeEstimationModelResNet18(),
     ]
 
     model_name = os.path.basename(model_path).split('.')[0]
     for model in models:
         if model_name in model.name:
             model.load_state_dict(torch.load(model_path))
-            return model
+            if "Face" in model_name:
+                _type = "face"
+            if "Eye"  in model_name:
+                _type = "eye"
+            return _type, model
     
     return None
 

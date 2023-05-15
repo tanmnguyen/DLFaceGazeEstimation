@@ -4,6 +4,15 @@ import torch
 import random
 import numpy as np
 
+from torch.utils.data import DataLoader, random_split
+
+def split_data(dataset, train_ratio: float, valid_ratio: float):
+    n = len(dataset)
+    train_sz = int(n * train_ratio)
+
+    return random_split(dataset, [train_sz, n - train_sz])
+
+
 def pitchyaw2xyz(pitchyaw: torch.Tensor) -> torch.Tensor:
     pitches, yaws = pitchyaw[:, 0], pitchyaw[:, 1]
     x = -torch.cos(pitches) * torch.sin(yaws)
