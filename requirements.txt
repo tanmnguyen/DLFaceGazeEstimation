@@ -5,8 +5,4 @@ torchvision==0.15.1
 matplotlib==3.7.1
 PyYAML==6.0
 opencv-python==4.7.0.72
-omnixai
-plotly
-dash 
-jupyter_dash
-dash_bootstrap_components
+grad-cam
