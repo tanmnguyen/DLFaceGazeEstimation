@@ -29,7 +29,12 @@ class RegressionOutputTarget:
     def __call__(self, model_output):
         return torch.sum(model_output)
 
-def _RIM(model: torch.nn.Module, gaze: torch.Tensor, img: np.ndarray, kernel_size=32, stride=8):
+def _normalize(arr: np.ndarray):
+    return (arr - np.min(arr)) / (np.max(arr) - np.min(arr))
+
+# generate Region Importance Map based on the paper: 
+# It’s Written All Over Your Face: Full-Face Appearance-Based Gaze Estimation
+def _RIM(model: torch.nn.Module, gaze: torch.Tensor, img: np.ndarray, kernel_size=64, stride=8):
     h, w = img.shape[0], img.shape[1]
     # region importance heat map 
     heat_map = np.zeros((h,w), dtype=np.float32)
@@ -41,24 +46,26 @@ def _RIM(model: torch.nn.Module, gaze: torch.Tensor, img: np.ndarray, kernel_siz
             # apply box filter 
             _img = np.copy(img)
             _img[y[0]: y[1], x[0]: x[1]] = 255 // 2
-            # pass through model
+            # prediction
             pred = model(torch.Tensor(_img).permute(2,0,1).unsqueeze(0))
-            heat_map[i,j] = angular_loss(
+            # compute angular loss 
+            al = angular_loss(
                 pitchyaw2xyz(pred),
                 pitchyaw2xyz(gaze)
             ).sum()
+            # build heat map
+            idx_i = [max(0, i - stride // 2), min(h, i + stride // 2)]
+            idx_j = [max(0, j - stride // 2), min(h, j + stride // 2)]
+            heat_map[idx_i[0]:idx_i[1],idx_j[0]:idx_j[1]] = al.cpu().detach().numpy()
 
     # smooth error distribution 
-    heat_map = cv2.blur(heat_map, (32, 32))
-    
+    heat_map = cv2.blur(heat_map, (48, 48))
+
     # normalize the heat map
-    heat_map = (heat_map - np.min(heat_map)) / (np.max(heat_map) - np.min(heat_map))
+    heat_map = _normalize(heat_map)
 
     # result
     return heat_map
-    # plot result
-    show_overlay_heat_map(img, heat_map, "Region Importance Map")
-
 
 def _interpret_model(model: torch.nn.Module, input_tensor: torch.Tensor, img: np.ndarray):
     # construct cam object 
@@ -71,24 +78,22 @@ def _interpret_model(model: torch.nn.Module, input_tensor: torch.Tensor, img: np
     heat_map = heat_map.reshape((heat_map.shape[1], heat_map.shape[2], heat_map.shape[0]))
 
     # result
-    return heat_map
-
-    # plot result
-    show_overlay_heat_map(img, heat_map, "FullGrad")
+    return heat_map 
 
 def main(args):
     # load pretrained model
     _type, model = load_model(args.model)
-    model = model.to(available_device()).eval()
+    model = model.to(available_device()).eval() 
 
     # load dataset 
     dataset = FaceDataset if _type == "face" else EyeDataset
     dataset = dataset(args.data, [f"p{args.testid:02}"], 0, 3000)
 
-    indices = np.arange(0, len(dataset)) if args.idx is None else [args.idx]
+    indices = np.arange(0, min(args.upperbound, len(dataset))) if args.idx is None else [args.idx]
 
     rim_heat_map, fullgrad_heat_map = [], []
-    for idx in tqdm(indices):
+    for enum, idx in enumerate(indices):
+        print(f"Processing Image {idx}")
         # load image 
         input_tensor, gaze = dataset[idx]
         img = input_tensor.permute(1,2,0).numpy().astype(np.uint8)
@@ -107,15 +112,18 @@ def main(args):
             img=img,
         ))
 
-    # average region importance map heat map
-    avg_rim_hm = np.mean(rim_heat_map, axis=0)
+        if enum % 10 == 0 or enum == len(indices) - 1:
+            # average region importance map heat map
+            avg_rim_hm = _normalize(np.max(rim_heat_map, axis=0))
 
-    # average fullgrad heat map
-    avg_fullgrad_hm = np.mean(fullgrad_heat_map, axis=0)
+            # average fullgrad heat map
+            avg_fullgrad_hm = _normalize(np.max(fullgrad_heat_map, axis=0))
 
-    # plot result
-    show_overlay_heat_map(img, avg_rim_hm, "Region Importance Map", save_path=f"interprets/{dst_name}-testid-{args.testid}")
-    show_overlay_heat_map(img, avg_fullgrad_hm, "FullGrad", save_path=f"interprets/{dst_name}-testid-{args.testid}")
+            print("max val", np.max(avg_rim_hm))
+            # plot result
+            save_path = f"interprets/{dst_name}-testid-{args.testid}"
+            show_overlay_heat_map(img, avg_rim_hm, "Region Importance Map", save_path=save_path)
+            show_overlay_heat_map(img, avg_fullgrad_hm, "FullGrad", save_path=save_path)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='')
@@ -143,6 +151,14 @@ if __name__ == '__main__':
                         type=int,
                         required=False,
                         help="image index. Average all images if not specified")
+
+    parser.add_argument('-upperbound',
+                        '--upperbound',
+                        default=3000,
+                        type=int,
+                        required=False,
+                        help="upper bound for image per directory")
+
 
     args = parser.parse_args()
     main(args)
