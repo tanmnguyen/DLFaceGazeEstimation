@@ -1,9 +1,48 @@
 import os
 import cv2
 import torch 
+import numpy as np
+import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 
 from utils.general import pitchyaw2xyz
+
+def show_heat_map(img: np.ndarray, heat_map: np.ndarray, caption: str):
+    # Apply a color map to the normalized heat map
+    heat_map_color = cv2.applyColorMap(np.uint8(heat_map * 255), cv2.COLORMAP_JET)
+
+    # Convert color
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    heat_map_color = cv2.cvtColor(heat_map_color, cv2.COLOR_BGR2RGB)
+
+    # Create a figure with two subplots
+    fig, axs = plt.subplots(1, 2, figsize=(12, 5))
+
+    # Plot the original image
+    axs[0].imshow(img)
+    axs[0].axis('off')
+    axs[0].set_title('Original Image')
+
+    # Plot the heat map
+    axs[1].imshow(img)
+    axs[1].imshow(heat_map_color, alpha=0.6)
+    axs[1].axis('off')
+    axs[1].set_title('Heat Map')
+
+    # Create a ScalarMappable with the jet colormap
+    scalar_mappable = cm.ScalarMappable(cmap='jet')
+    scalar_mappable.set_array(heat_map)
+
+    # Add a colorbar legend for the heat map (outside the images)
+    cbar = plt.colorbar(scalar_mappable, ax=axs[1], fraction=0.05, pad=0.04, orientation='vertical')
+    cbar.ax.set_ylabel('Intensity')
+
+    # Add caption
+    fig.suptitle(caption, fontsize=12)
+
+    # Adjust the layout and display the figure
+    plt.tight_layout()
+    plt.show()
 
 def draw_bboxes(img, bboxes, color=[0,255,0]):
     for box in bboxes:
