@@ -7,7 +7,9 @@ import matplotlib.pyplot as plt
 
 from utils.general import pitchyaw2xyz
 
-def show_heat_map(img: np.ndarray, heat_map: np.ndarray, caption: str):
+def show_overlay_heat_map(img: np.ndarray, heat_map: np.ndarray, caption: str, save_path: str = None):
+    os.makedirs(save_path, exist_ok=True)
+
     # Apply a color map to the normalized heat map
     heat_map_color = cv2.applyColorMap(np.uint8(heat_map * 255), cv2.COLORMAP_JET)
 
@@ -42,7 +44,11 @@ def show_heat_map(img: np.ndarray, heat_map: np.ndarray, caption: str):
 
     # Adjust the layout and display the figure
     plt.tight_layout()
-    plt.show()
+
+    if save_path is None:
+        plt.show()
+    else:
+        plt.savefig(os.path.join(save_path, f"{caption}.svg"))
 
 def draw_bboxes(img, bboxes, color=[0,255,0]):
     for box in bboxes:

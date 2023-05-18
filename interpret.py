@@ -1,5 +1,6 @@
 import cv2 
 import torch 
+import datetime
 import argparse 
 import numpy as np
 
@@ -7,15 +8,19 @@ import matplotlib.pyplot as plt
 from matplotlib.cm import ScalarMappable
 
 from utils.file import load_model
-from utils.plot import show_heat_map
 from utils.runtime import available_device
 from torchvision import models, transforms
+from utils.plot import show_overlay_heat_map
 from datasets.FaceDataset import FaceDataset
 from utils.general import pitchyaw2xyz, angular_loss
 
 from pytorch_grad_cam import GradCAM, FullGrad
 from pytorch_grad_cam.utils.image import show_cam_on_image
 from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget, RawScoresOutputTarget
+
+from tqdm import tqdm
+
+dst_name = f"interpret-{datetime.datetime.now().strftime('%Y.%m.%d. %H.%M.%S')}"
 
 class RegressionOutputTarget:
     def __init__(self):
@@ -49,8 +54,10 @@ def _RIM(model: torch.nn.Module, gaze: torch.Tensor, img: np.ndarray, kernel_siz
     # normalize the heat map
     heat_map = (heat_map - np.min(heat_map)) / (np.max(heat_map) - np.min(heat_map))
 
+    # result
+    return heat_map
     # plot result
-    show_heat_map(img, heat_map, "Region Importance Map")
+    show_overlay_heat_map(img, heat_map, "Region Importance Map")
 
 
 def _interpret_model(model: torch.nn.Module, input_tensor: torch.Tensor, img: np.ndarray):
@@ -58,13 +65,16 @@ def _interpret_model(model: torch.nn.Module, input_tensor: torch.Tensor, img: np
     cam = FullGrad(model=model, target_layers=[model.model.layer4[-1]], use_cuda=False)
 
     # compute heat map 
-    heat_map = cam(input_tensor=input_tensor, targets=None)
+    heat_map = cam(input_tensor=input_tensor)
 
     # reshape
     heat_map = heat_map.reshape((heat_map.shape[1], heat_map.shape[2], heat_map.shape[0]))
 
+    # result
+    return heat_map
+
     # plot result
-    show_heat_map(img, heat_map, "FullGrad")
+    show_overlay_heat_map(img, heat_map, "FullGrad")
 
 def main(args):
     # load pretrained model
@@ -75,22 +85,37 @@ def main(args):
     dataset = FaceDataset if _type == "face" else EyeDataset
     dataset = dataset(args.data, [f"p{args.testid:02}"], 0, 3000)
 
-    # load image 
-    input_tensor, gaze = dataset[args.idx]
-    
-    # show Region Importance Map (RIM)
-    _RIM(
-        model=model, 
-        gaze=gaze.unsqueeze(0).to(available_device()),
-        img=input_tensor.permute(1,2,0).numpy().astype(np.uint8), 
-    )
-    
-    # interpret the deep cnn
-    _interpret_model(
-        model=model, 
-        input_tensor=input_tensor.unsqueeze(0),
-        img=input_tensor.permute(1,2,0).numpy().astype(np.uint8), 
-    )
+    indices = np.arange(0, len(dataset)) if args.idx is None else [args.idx]
+
+    rim_heat_map, fullgrad_heat_map = [], []
+    for idx in tqdm(indices):
+        # load image 
+        input_tensor, gaze = dataset[idx]
+        img = input_tensor.permute(1,2,0).numpy().astype(np.uint8)
+        
+        # show Region Importance Map (RIM)
+        rim_heat_map.append(_RIM(
+            model=model, 
+            gaze=gaze.unsqueeze(0).to(available_device()),
+            img=img,
+        ))
+        
+        # interpret the deep cnn
+        fullgrad_heat_map.append(_interpret_model(
+            model=model, 
+            input_tensor=input_tensor.unsqueeze(0),
+            img=img,
+        ))
+
+    # average region importance map heat map
+    avg_rim_hm = np.mean(rim_heat_map, axis=0)
+
+    # average fullgrad heat map
+    avg_fullgrad_hm = np.mean(fullgrad_heat_map, axis=0)
+
+    # plot result
+    show_overlay_heat_map(img, avg_rim_hm, "Region Importance Map", save_path=f"interprets/{dst_name}-testid-{args.testid}")
+    show_overlay_heat_map(img, avg_fullgrad_hm, "FullGrad", save_path=f"interprets/{dst_name}-testid-{args.testid}")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='')
@@ -116,9 +141,8 @@ if __name__ == '__main__':
     parser.add_argument('-idx',
                         '--idx',
                         type=int,
-                        default=0,
                         required=False,
-                        help="image index")
+                        help="image index. Average all images if not specified")
 
     args = parser.parse_args()
     main(args)
