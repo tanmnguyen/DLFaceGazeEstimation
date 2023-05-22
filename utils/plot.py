@@ -8,8 +8,6 @@ import matplotlib.pyplot as plt
 from utils.general import pitchyaw2xyz
 
 def show_overlay_heat_map(img: np.ndarray, heat_map: np.ndarray, caption: str, save_path: str = None):
-    os.makedirs(save_path, exist_ok=True)
-
     # Apply a color map to the normalized heat map
     heat_map_color = cv2.applyColorMap(np.uint8(heat_map * 255), cv2.COLORMAP_JET)
 

@@ -1,3 +1,4 @@
+import os
 import cv2 
 import torch 
 import datetime
@@ -18,24 +19,25 @@ from pytorch_grad_cam import GradCAM, FullGrad
 from pytorch_grad_cam.utils.image import show_cam_on_image
 from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget, RawScoresOutputTarget
 
-from tqdm import tqdm
-
 dst_name = f"interpret-{datetime.datetime.now().strftime('%Y.%m.%d. %H.%M.%S')}"
-
-class RegressionOutputTarget:
-    def __init__(self):
-        pass
-
-    def __call__(self, model_output):
-        return torch.sum(model_output)
 
 def _normalize(arr: np.ndarray):
     return (arr - np.min(arr)) / (np.max(arr) - np.min(arr))
 
+def _mean_max(heat_map: np.ndarray, batch_size: int = 85):
+    n       = len(heat_map)
+    batches = [heat_map[i:min(n, i + batch_size)] for i in range(0, n, batch_size)]  # Divide into batches
+
+    for i in range(len(batches)):
+        batches[i] = np.max(batches[i], axis=0)
+
+    return np.mean(batches, axis=0)
+
 # generate Region Importance Map based on the paper: 
 # It’s Written All Over Your Face: Full-Face Appearance-Based Gaze Estimation
-def _RIM(model: torch.nn.Module, gaze: torch.Tensor, img: np.ndarray, kernel_size=64, stride=8):
+def _RIM(model: torch.nn.Module, gaze: torch.Tensor, img: np.ndarray, kernel_size=32, stride=8):
     h, w = img.shape[0], img.shape[1]
+
     # region importance heat map 
     heat_map = np.zeros((h,w), dtype=np.float32)
     for i in range(0, h, stride):
@@ -43,23 +45,33 @@ def _RIM(model: torch.nn.Module, gaze: torch.Tensor, img: np.ndarray, kernel_siz
             # mask border 
             y = [max(0, i - kernel_size // 2), min(h, i + kernel_size // 2)]
             x = [max(0, j - kernel_size // 2), min(w, j + kernel_size // 2)]
+
             # apply box filter 
             _img = np.copy(img)
             _img[y[0]: y[1], x[0]: x[1]] = 255 // 2
+
             # prediction
             pred = model(torch.Tensor(_img).permute(2,0,1).unsqueeze(0))
+
             # compute angular loss 
-            al = angular_loss(
-                pitchyaw2xyz(pred),
-                pitchyaw2xyz(gaze)
-            ).sum()
+            al = angular_loss(pitchyaw2xyz(pred), pitchyaw2xyz(gaze)).sum()
+
             # build heat map
             idx_i = [max(0, i - stride // 2), min(h, i + stride // 2)]
-            idx_j = [max(0, j - stride // 2), min(h, j + stride // 2)]
+            idx_j = [max(0, j - stride // 2), min(w, j + stride // 2)]
+            
+            # edge case
+            if i + stride >= h:
+                idx_i[1] = h
+            
+            if j + stride >= w:
+                idx_j[1] = w
+
+            # assign heat map value 
             heat_map[idx_i[0]:idx_i[1],idx_j[0]:idx_j[1]] = al.cpu().detach().numpy()
 
     # smooth error distribution 
-    heat_map = cv2.blur(heat_map, (48, 48))
+    heat_map = cv2.blur(heat_map, (32, 32))
 
     # normalize the heat map
     heat_map = _normalize(heat_map)
@@ -91,6 +103,10 @@ def main(args):
 
     indices = np.arange(0, min(args.upperbound, len(dataset))) if args.idx is None else [args.idx]
 
+    # save destination 
+    save_path = f"interprets/{dst_name}-testid-{args.testid}"
+    os.makedirs(save_path, exist_ok=True)
+
     rim_heat_map, fullgrad_heat_map = [], []
     for enum, idx in enumerate(indices):
         print(f"Processing Image {idx}")
@@ -112,18 +128,22 @@ def main(args):
             img=img,
         ))
 
-        if enum % 10 == 0 or enum == len(indices) - 1:
-            # average region importance map heat map
-            avg_rim_hm = _normalize(np.max(rim_heat_map, axis=0))
-
+        if enum % 10 == 0 or enum == len(indices) - 1:            
+            # average region importance map
+            avg_rim_hm = _normalize(_mean_max(rim_heat_map))
+            
             # average fullgrad heat map
-            avg_fullgrad_hm = _normalize(np.max(fullgrad_heat_map, axis=0))
+            avg_fullgrad_hm = _normalize(_mean_max(fullgrad_heat_map))
+            
+            # save heat maps
+            np.save(os.path.join(save_path, "region_importance_map.npy"), avg_rim_hm)
+            np.save(os.path.join(save_path, "full_grad_heat_map.npy"), avg_fullgrad_hm)
 
-            print("max val", np.max(avg_rim_hm))
-            # plot result
-            save_path = f"interprets/{dst_name}-testid-{args.testid}"
+            # plot and save result
             show_overlay_heat_map(img, avg_rim_hm, "Region Importance Map", save_path=save_path)
             show_overlay_heat_map(img, avg_fullgrad_hm, "FullGrad", save_path=save_path)
+
+            print("checkpoint saved")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='')
