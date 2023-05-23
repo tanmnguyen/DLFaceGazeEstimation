@@ -35,11 +35,10 @@ def _mean_max(heat_map: np.ndarray, batch_size: int = 85):
 
 # generate Region Importance Map based on the paper: 
 # It’s Written All Over Your Face: Full-Face Appearance-Based Gaze Estimation
-def _RIM(model: torch.nn.Module, gaze: torch.Tensor, img: np.ndarray, kernel_size=32, stride=8):
+def _RIM(model: torch.nn.Module, gaze: torch.Tensor, img: np.ndarray, kernel_size=32, stride=16):
     h, w = img.shape[0], img.shape[1]
 
-    # region importance heat map 
-    heat_map = np.zeros((h,w), dtype=np.float32)
+    imgs, indices = [], []
     for i in range(0, h, stride):
         for j in range(0, w, stride):
             # mask border 
@@ -50,25 +49,38 @@ def _RIM(model: torch.nn.Module, gaze: torch.Tensor, img: np.ndarray, kernel_siz
             _img = np.copy(img)
             _img[y[0]: y[1], x[0]: x[1]] = 255 // 2
 
-            # prediction
-            pred = model(torch.Tensor(_img).permute(2,0,1).unsqueeze(0))
+            # save 
+            imgs.append(_img)
+            indices.append((i,j))
 
-            # compute angular loss 
-            al = angular_loss(pitchyaw2xyz(pred), pitchyaw2xyz(gaze)).sum()
+    # convert to tensor 
+    imgs = np.array(imgs)
+    imgs = torch.Tensor(imgs).permute(0, 3, 1, 2)
+    
+    # predict 
+    gazes = model(imgs)
 
-            # build heat map
-            idx_i = [max(0, i - stride // 2), min(h, i + stride // 2)]
-            idx_j = [max(0, j - stride // 2), min(w, j + stride // 2)]
-            
-            # edge case
-            if i + stride >= h:
-                idx_i[1] = h
-            
-            if j + stride >= w:
-                idx_j[1] = w
+    # region importance heat map 
+    heat_map = np.zeros((h,w), dtype=np.float32)
+    for idx, pred in enumerate(gazes):
+        i, j = indices[idx][0], indices[idx][1]
 
-            # assign heat map value 
-            heat_map[idx_i[0]:idx_i[1],idx_j[0]:idx_j[1]] = al.cpu().detach().numpy()
+        # compute angular loss 
+        al = angular_loss(pitchyaw2xyz(pred.unsqueeze(0)), pitchyaw2xyz(gaze)).sum()
+
+        # fill indices 
+        idx_i = [max(0, i - stride // 2), min(h, i + stride // 2)]
+        idx_j = [max(0, j - stride // 2), min(w, j + stride // 2)]
+
+        # edge case
+        if i + stride >= h:
+            idx_i[1] = h
+        
+        if j + stride >= w:
+            idx_j[1] = w
+
+        # assign heat map value 
+        heat_map[idx_i[0]:idx_i[1],idx_j[0]:idx_j[1]] = al.cpu().detach().numpy()    
 
     # smooth error distribution 
     heat_map = cv2.blur(heat_map, (32, 32))
