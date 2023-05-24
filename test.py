@@ -1,9 +1,10 @@
 import os 
+import torch
 import argparse 
 import datetime 
 import numpy as np
 
-from utils.file import load_model
+from utils.file import get_model
 from utils.general import split_data
 from torch.utils.data import DataLoader
 
@@ -15,17 +16,14 @@ dst_name = f"tests/test-{datetime.datetime.now().strftime('%Y.%m.%d. %H.%M.%S')}
 def main(args):
     test_list  = [f"p{args.testid:02}"]
 
-    # load pre-trained model 
-    _type, model = load_model(args.model)
+    # get model 
+    _type, model = get_model(args.model)
 
     # load dataset type 
     dataset = EyeDataset if _type == "eye" else FaceDataset
 
     # load data 
     fine_tune = dataset(args.data, test_list,  0, up_bound=args.upperbound) 
-
-    # tuning configuration
-    model.tune_config()
 
     # load mask regions
     regions = [None] if args.regions is None else np.load(args.regions)
@@ -35,6 +33,12 @@ def main(args):
     os.makedirs(save_path, exist_ok=True)
 
     for region_id, region in enumerate(regions):
+        # load weight
+        model.load_state_dict(torch.load(args.model))
+
+        # tuning configuration
+        model.tune_config()
+
         # set mask information 
         fine_tune.set_mask(region, region_id, save_path=save_path)
 

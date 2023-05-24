@@ -23,7 +23,7 @@ def extract_test_id(folder_name):
     else:
         return None
 
-def load_model(model_path: str):
+def get_model(model_path: str):
     models = [
         FaceGazeEstimationModelResNet18(),
         EyeGazeEstimationModelResNet18(),
@@ -32,7 +32,6 @@ def load_model(model_path: str):
     model_name = os.path.basename(model_path).split('.')[0]
     for model in models:
         if model_name in model.name:
-            model.load_state_dict(torch.load(model_path))
             if "Face" in model_name:
                 _type = "face"
             if "Eye"  in model_name:

@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.cm import ScalarMappable
 
-from utils.file import load_model
+from utils.file import get_model
 from utils.runtime import available_device
 from torchvision import models, transforms
 from utils.plot import show_overlay_heat_map
@@ -106,7 +106,7 @@ def _interpret_model(model: torch.nn.Module, input_tensor: torch.Tensor, img: np
 
 def main(args):
     # load pretrained model
-    _type, model = load_model(args.model)
+    _type, model = get_model(args.model)
     model = model.to(available_device()).eval() 
 
     # load dataset 
