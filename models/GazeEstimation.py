@@ -19,8 +19,6 @@ class GazeEstimationModel(nn.Module):
         self.name       = "gaze-estimation-model.pt"
         self.device     = device 
 
-        self.disable_train_mps = False
-
     def tune_config(self):
         num_bn = 0
         # Freeze all Batch Normalization (BN) layers
@@ -30,9 +28,6 @@ class GazeEstimationModel(nn.Module):
                 module.weight.requires_grad = False
                 module.bias.requires_grad   = False
                 num_bn += 1
-        # use cpu instead of mps (pytorch bug)
-        if num_bn > 0 and self.device == torch.device('mps'):
-            self.disable_train_mps = True
 
     def _save_fig(self, dst_dir: str):
         save_step_history(self.train_step_history, self.val_step_history, dst_dir)
@@ -40,12 +35,6 @@ class GazeEstimationModel(nn.Module):
 
     def _train_net(self, epoch: int):
         self.train() 
-
-        device = self.device
-        if self.disable_train_mps and self.device == torch.device("mps"):
-            self.device=torch.device('cpu')
-
-        self.to(self.device)
 
         train_l1_loss, train_ma_loss = 0, 0
         for data, target in tqdm(self.train_loader, desc=f"(Train) Epoch {epoch} [{self.device}]"):
@@ -74,12 +63,10 @@ class GazeEstimationModel(nn.Module):
         train_l1_loss /= len(self.train_loader)
         train_ma_loss /= len(self.train_loader)
 
-        self.device = device
         return train_l1_loss, train_ma_loss
 
     def _eval_net(self, epoch: int):
         self.eval()
-        self.to(self.device)
 
         val_l1_loss, val_ma_loss = 0, 0
         with torch.no_grad():
@@ -111,7 +98,7 @@ class GazeEstimationModel(nn.Module):
         self.train_loader = train_loader   
         self.valid_loader = valid_loader 
         self.optimizer    = torch.optim.Adam(self.parameters(), lr=lr)
-
+        self.to(self.device)
         os.makedirs(dst_dir, exist_ok=True)
 
     def fit(self, train_loader, valid_loader, epochs: int, lr: float, dst_dir: str):
