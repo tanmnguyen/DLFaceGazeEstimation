@@ -1,16 +1,12 @@
+import sys 
+sys.path.append("../")
+
 import os
 import re
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
-
-def extract_test_id(folder_name):
-    pattern = r"testid-(\d+)$"
-    match = re.search(pattern, folder_name)
-    if match:
-        return int(match.group(1))
-    else:
-        return None
+from utils.file import extract_test_id
 
 def read_result_file(folder_path):
     file_path = os.path.join(folder_path, "result.txt")

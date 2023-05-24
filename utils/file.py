@@ -2,6 +2,7 @@ import sys
 sys.path.append('../')
 
 import os
+import re
 import cv2
 import torch 
 import numpy as np
@@ -12,6 +13,15 @@ from torch.utils.data import Dataset, DataLoader
 
 from models.FaceGazeEstimationResNet18 import FaceGazeEstimationModelResNet18
 from models.EyeGazeEstimationResNet18  import EyeGazeEstimationModelResNet18
+
+
+def extract_test_id(folder_name):
+    pattern = r"testid-(\d+)$"
+    match = re.search(pattern, folder_name)
+    if match:
+        return int(match.group(1))
+    else:
+        return None
 
 def load_model(model_path: str):
     models = [

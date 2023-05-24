@@ -7,6 +7,44 @@ import matplotlib.pyplot as plt
 
 from utils.general import pitchyaw2xyz
 
+
+def show_image(image: np.ndarray, caption: str, save_path: str = None):
+    # convert to rgb 
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+    # Display image
+    plt.imshow(image)
+    plt.title(caption)
+    plt.axis('off')
+
+    # Save the heatmap if save_path is provided
+    if save_path:
+        plt.savefig(os.path.join(save_path, f"{caption}.svg"))
+    else:
+        # Show the plot
+        plt.show()
+    
+    plt.close()
+
+def show_heat_map(heat_map: np.ndarray, caption: str, save_path: str = None):
+    # Apply a color map to the normalized heat map
+    heat_map_color = cv2.applyColorMap(np.uint8(heat_map * 255), cv2.COLORMAP_JET)
+    heat_map_color = cv2.cvtColor(heat_map_color, cv2.COLOR_BGR2RGB)
+
+    # Display the heatmap using plt
+    plt.imshow(heat_map_color)
+    plt.title(caption)
+    plt.axis('off')
+
+    # Save the heatmap if save_path is provided
+    if save_path:
+        plt.savefig(os.path.join(save_path, f"{caption}.svg"))
+    else:
+        # Show the plot
+        plt.show()
+
+    plt.close()
+
 def show_overlay_heat_map(img: np.ndarray, heat_map: np.ndarray, caption: str, save_path: str = None):
     # Apply a color map to the normalized heat map
     heat_map_color = cv2.applyColorMap(np.uint8(heat_map * 255), cv2.COLORMAP_JET)
@@ -47,6 +85,8 @@ def show_overlay_heat_map(img: np.ndarray, heat_map: np.ndarray, caption: str, s
         plt.show()
     else:
         plt.savefig(os.path.join(save_path, f"{caption}.svg"))
+    
+    plt.close()
 
 def draw_bboxes(img, bboxes, color=[0,255,0]):
     for box in bboxes:
@@ -82,6 +122,8 @@ def save_epoc_history(epoch_history, dst_dir):
     ax2.legend()
     # save both plots in one figure as a PNG file
     plt.savefig(os.path.join(dst_dir, 'epoch_losses.png'))
+
+    plt.close()
 
 def save_step_history(train_step_history, valid_step_history, dst_dir):
     # Plot the training and validation losses
@@ -121,3 +163,5 @@ def save_step_history(train_step_history, valid_step_history, dst_dir):
     plt.xlabel("Step")
     plt.ylabel("Loss")
     plt.savefig(os.path.join(dst_dir, "validation_ma_loss.png"))
+
+    plt.close()
