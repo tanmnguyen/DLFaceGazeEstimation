@@ -13,7 +13,8 @@ class FaceDataset(Dataset):
     def __init__(self, data_dir: str, id_list: List[str], lw_bound: int, up_bound: int):
         self.face = [] # face image 
         self.targ = [] # gaze direction
-
+        self.masks    = []
+        self.mask_ids = []
         for pid in id_list:
             self.add(data_dir, pid, lw_bound, up_bound)
 
@@ -23,13 +24,29 @@ class FaceDataset(Dataset):
 
         return images, gazes 
 
-    def set_mask(self, mask: np.ndarray, id: int, save_path: str = None):
-        self.mask = mask
+    def set_mask(self, masks, mode: str, save_path: str = None):
+        for mask_id, mask in masks:
+            self.masks.append(mask)
+            self.mask_ids.append(mask_id)
 
-        # save mask example
-        if mask is not None and save_path is not None:
-            show_image(self._apply_mask(self.face[0]), f"Region Mask {id}", save_path)
+        self.mask_mode = mode 
 
+        # save example masked image 
+        if len(self.masks) > 0 and save_path is not None:
+            _img = self._apply_mask(self.face[0]) 
+            show_image(_img, caption=f"Region Mask {mode} {self.mask_ids[0]}", save_path=save_path)
+
+    def get_mask_name(self):
+        # no mask 
+        if len(self.masks) == 0:
+            return ""
+        
+        # positive mask 
+        if self.mode == "positive":
+            return "-positive"
+
+        # negative mask 
+        return f"-negative-{self.masks_ids[0]}"
 
     def add(self, data_dir, pid, lw_bound, up_bound):
         images, gazes = self._load_data(data_dir, pid, lw_bound, up_bound)
@@ -44,15 +61,22 @@ class FaceDataset(Dataset):
         return len(self.targ)
 
     def _apply_mask(self, img: np.ndarray):
-        # original image 
-        if self.mask is None:
-            return img 
+        # negative mask 
+        if self.mask_mode == "negative":
+            _img = np.copy(img)
+            for mask in self.masks:
+                _img[mask[1]: mask[3], mask[0]: mask[2]] = 255 // 2
 
-        # apply mask 
-        _img = np.copy(img)
-        _img[self.mask[1]: self.mask[3], self.mask[0] : self.mask[2]] = 255 / 2
+            return _img 
+        
+        # positive mask 
+        if self.mask_mode == "positive":
+            _img = np.full_like(img, 255 // 2)
+            for mask in self.masks:
+                _img[mask[1]: mask[3], mask[0]: mask[2]] = img[mask[1]: mask[3], mask[0]: mask[2]]
 
-        return _img
+        return _img 
+
     def __getitem__(self, idx):
         # build data 
         data = torch.Tensor(self._apply_mask(self.face[idx])).float().permute(2,0,1)

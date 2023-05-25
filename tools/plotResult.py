@@ -8,8 +8,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from utils.file import extract_test_id
 
-def read_result_file(folder_path):
-    file_path = os.path.join(folder_path, "result.txt")
+def read_result_file(folder_path: str, result_file: str):
+    file_path = os.path.join(folder_path, result_file)
     if os.path.isfile(file_path):
         with open(file_path, "r") as file:
             for line in file:
@@ -21,12 +21,12 @@ def read_result_file(folder_path):
                         pass
     return None
 
-def plot_histogram(test_ids, results):
+def plot_histogram(test_ids, results, title):
     num_bins = len(set(test_ids))
     _, bins, _ = plt.hist(test_ids, bins=num_bins, weights=results, alpha=0.7, rwidth=0.85, color='steelblue')
     plt.xlabel('Test Subject ID')
     plt.ylabel('Error in Degree')
-    plt.title('Angular Error Historgram')
+    plt.title(title)
 
     # Adjust the x-axis tick positions and labels
     bin_centers = 0.5 * (bins[:-1] + bins[1:])
@@ -46,9 +46,9 @@ def plot_histogram(test_ids, results):
 
     plt.legend()
     plt.show()
+    plt.close()
 
-
-def process_folders(path):
+def process_folders(path: str, result_file: str):
     test_ids = []
     results = []
 
@@ -60,15 +60,20 @@ def process_folders(path):
         if os.path.isdir(folder_path):
             test_id = extract_test_id(folder_name)
             if test_id is not None:
-                result = read_result_file(folder_path)
+                result = read_result_file(folder_path, result_file)
                 if result is not None:
                     test_ids.append(test_id)
                     results.append(result)
 
-    plot_histogram(test_ids, results)
+    if len(results) > 0:
+        plot_histogram(test_ids, results, title=f"Angular Error Histogram {os.path.basename(result_file)}")
 
 def main(args):
-    process_folders(args.path)
+    result_files = ["result.txt"]
+    result_files.extend([f"result-region-{id}.txt" for id in range(7)])
+
+    for result_file in result_files:
+        process_folders(args.path, result_file)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='')
