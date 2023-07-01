@@ -4,6 +4,7 @@ A PyTorch reference implementation of the thesis "Exploring The Influence of Fac
     <img src="assets/inference-example-1.png" alt="drawing" width="150">
     <img src="assets/inference-example-2.png" alt="drawing" width="150">
     <img src="assets/inference-example-3.png" alt="drawing" width="150">
+    </br>
     <em>Inference examples using MPIIFaceGaze Dataset. From left to right, participant ids are 14, 12, and 8 respectively.</em>
 </p>
 
