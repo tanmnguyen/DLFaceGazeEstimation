@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 
 from utils.general import pitchyaw2xyz
 
-
 def show_image(image: np.ndarray, caption: str, save_path: str = None):
     # convert to rgb 
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -98,7 +97,8 @@ def draw_gaze(img, pitchyaw: torch.Tensor, scale: int = 200):
     center = (img.shape[1] // 2, img.shape[0] // 2)
     for xyz in gaze_vecs:
         dx, dy, dz = xyz[0].item(), xyz[1].item(), xyz[2].item()
-        img = cv2.arrowedLine(img, center, (int(center[0] + dx * scale), int(center[1] + dy * scale)), [0,255,0], 1) 
+        print("dx", dx, "dy", dy, "full xyz", xyz)
+        img = cv2.arrowedLine(img, center, (int(center[0] + dx * scale), int(center[1] + dy * scale)), [0,255,0], 2) 
     return img 
 
 def save_epoc_history(epoch_history, dst_dir):

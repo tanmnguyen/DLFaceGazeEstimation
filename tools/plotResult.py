@@ -22,8 +22,10 @@ def read_result_file(folder_path: str, result_file: str):
     return None
 
 def plot_histogram(test_ids, results, title):
+    plt.figure(figsize=(9, 7))
+
     num_bins = len(set(test_ids))
-    _, bins, _ = plt.hist(test_ids, bins=num_bins, weights=results, alpha=0.7, rwidth=0.85, color='steelblue')
+    _, bins, _ = plt.hist(test_ids, bins=num_bins, weights=results, alpha=1, width=0.95, color='cyan')
     plt.xlabel('Test Subject ID')
     plt.ylabel('Error in Degree')
     plt.title(title)
@@ -33,16 +35,34 @@ def plot_histogram(test_ids, results, title):
     plt.xticks(bin_centers, sorted(set(test_ids)))
 
     # Assign a different color to each bin
-    color_map = plt.get_cmap('viridis')
+    color_map = plt.get_cmap('Spectral')
     bin_colors = [color_map(i / num_bins) for i in range(num_bins)]
     for patch, color in zip(plt.gca().patches, bin_colors):
         patch.set_facecolor(color)
 
     # Calculate and display the average line
-    average_result = sum(results) / len(results)
+    average_result = np.mean(results)
+    std_result = np.std(results)
     plt.axhline(y=average_result, color='blue', linestyle='--', label='Average')
 
-    print("Average Result", average_result)
+    print("Average Result:", average_result)
+    print("Standard Deviation:", std_result)
+
+    # Show results inside each histogram bin
+    for _id, result, x in zip(test_ids, results, bin_centers):
+        plt.text(x, result, f'{result:.3f}          ', ha='center', va='top', rotation='vertical', fontsize=12)
+
+    # Set y-axis limits to include the average value and standard deviation
+    ymin, ymax = plt.ylim()
+    plt.ylim(ymin, max(ymax, average_result + 0.1 * ymax + std_result))
+
+    # Show average and standard deviation text outside histogram space
+    plt.text(
+        max(bin_centers) + 1.2, 
+        average_result, f'{average_result:.3f} ± {std_result:.3f} ', ha='left', va='center', 
+        rotation='vertical',
+        fontsize=12,
+    )
 
     plt.legend()
     plt.show()
@@ -66,7 +86,7 @@ def process_folders(path: str, result_file: str):
                     results.append(result)
 
     if len(results) > 0:
-        plot_histogram(test_ids, results, title=f"Angular Error Histogram {os.path.basename(result_file)}")
+        plot_histogram(test_ids, results, title=f"Angular Error Histogram {os.path.basename(result_file).split('.')[0]}")
 
 def main(args):
     result_files = ["result.txt"]

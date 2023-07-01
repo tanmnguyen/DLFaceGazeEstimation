@@ -1,6 +1,7 @@
 import os
 import cv2 
 import torch 
+import random
 import datetime
 import argparse 
 import numpy as np
@@ -52,6 +53,11 @@ def _RIM(model: torch.nn.Module, gaze: torch.Tensor, img: np.ndarray, kernel_siz
             # save 
             imgs.append(_img)
             indices.append((i,j))
+
+
+    selected = random.choices(np.arange(0, len(imgs)), k=5)
+    for idx in selected:
+        cv2.imwrite(f"Index: {idx} Pos {indices[idx][0]}, {indices[idx][1]}.png", imgs[idx])
 
     # convert to tensor 
     imgs = np.array(imgs)

@@ -12,7 +12,6 @@ def split_data(dataset, train_ratio: float, valid_ratio: float):
 
     return random_split(dataset, [train_sz, n - train_sz])
 
-
 def pitchyaw2xyz(pitchyaw: torch.Tensor) -> torch.Tensor:
     pitches, yaws = pitchyaw[:, 0], pitchyaw[:, 1]
     x = -torch.cos(pitches) * torch.sin(yaws)

@@ -15,6 +15,7 @@ class FaceDataset(Dataset):
         self.targ = [] # gaze direction
         self.masks    = []
         self.mask_ids = []
+        self.mask_mode = "negative" # default mask mode 
         for pid in id_list:
             self.add(data_dir, pid, lw_bound, up_bound)
 
@@ -42,7 +43,7 @@ class FaceDataset(Dataset):
             return ""
         
         # positive mask 
-        if self.mode == "positive":
+        if self.mask_mode == "positive":
             return "-positive"
 
         # negative mask 

@@ -13,7 +13,6 @@ from datasets.FaceDataset import FaceDataset
 
 dst_name = f"tests/test-{datetime.datetime.now().strftime('%Y.%m.%d. %H.%M.%S')}"
 
-
 def fine_tune(args, model, fine_tune_dataset, save_path):
     # load weight
     model.load_state_dict(torch.load(args.model))
@@ -50,7 +49,6 @@ def eval(args, model, fine_tune_dataset):
         content = f"Validation Angular Error: {valid_angular_err}"
         file.write(content)
     
-
 def process_negative_mask(args, model, fine_tune_dataset, mask_regions, save_path):
     for region_id, region in enumerate(mask_regions):
         # set single mask 
@@ -59,7 +57,6 @@ def process_negative_mask(args, model, fine_tune_dataset, mask_regions, save_pat
         fine_tune(args, model, fine_tune_dataset, save_path)
         # evaluate model 
         eval(args, model, fine_tune_dataset)
-
 
 def process_positive_mask(args, model, fine_tune_dataset, mask_regions, save_path):
     # set multiple masks
